@@ -1,0 +1,17 @@
+{
+  "vbw": {
+    "shadow_path": "/tmp/vbw-shadow",
+    "max_iterations": 5,
+    "parallel_execution": false,
+    "auto_cleanup": true,
+    "verbose_logging": true,
+    "excluded_patterns": [
+      ".git",
+      "__pycache__",
+      ".venv",
+      "*.pyc",
+      ".pytest_cache",
+      "node_modules"
+    ]
+  }
+}
