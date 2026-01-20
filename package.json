@@ -8,7 +8,8 @@
   "files": [
     "bin/",
     "commands/",
-    "settings/"
+    "settings/",
+    "utils/"
   ],
   "private": true,
   "repository": {

@@ -32,9 +32,27 @@ After install, these slash commands are available in Claude Code:
 | `/vbw-deps` | Dependency order resolution |
 | `/vbw-report` | Aggregate validation report |
 
+## Supported Languages
+
+| Language | Detection Files | Error Patterns |
+|----------|-----------------|----------------|
+| Python | `pyproject.toml`, `*.py` | 10 patterns |
+| TypeScript | `tsconfig.json`, `*.ts` | 12 patterns |
+| Go | `go.mod`, `*.go` | 12 patterns |
+| Java | `pom.xml`, `*.java` | 10 patterns |
+| C# | `*.csproj`, `*.cs` | 10 patterns |
+| Ruby | `Gemfile`, `*.rb` | 10 patterns |
+| PHP | `composer.json`, `*.php` | 10 patterns |
+| Rust | `Cargo.toml`, `*.rs` | 10 patterns |
+| Swift | `Package.swift`, `*.swift` | 10 patterns |
+| Kotlin | `*.kt`, `build.gradle.kts` | 10 patterns |
+| C/C++ | `CMakeLists.txt`, `*.cpp` | 11 patterns |
+
+**Total: 11 languages, 115 error patterns**
+
 ## How It Works
 
-1. rsync project to `/tmp/vbw-shadow/`
+1. rsync project to `/tmp/vbw-shadow/` (secrets excluded)
 2. Make changes in shadow
 3. Run validations (syntax, imports, tests)
 4. If validation fails → **Diagnose → Fix → Retry** (up to 5 iterations)
@@ -48,16 +66,18 @@ When validation fails, the execution subagent now performs structured diagnosis:
 FAIL → Parse Error → Classify Type → Apply Fix Strategy → Retry
 ```
 
-### Supported Error Types
+### Error Categories (All Languages)
 
-| Error Type | Pattern | Fix Strategy |
-|------------|---------|--------------|
-| ImportError | `ModuleNotFoundError` | Check import path, verify file exists |
-| SyntaxError | `IndentationError`, `invalid syntax` | Fix indentation, check colons/brackets |
-| FixtureError | `fixture '...' not found` | Use correct fixture name from conftest.py |
-| AssertionError | `assert ... == ...` | Check expected vs actual values |
-| BuildError | Docker build failures | Check Dockerfile syntax and paths |
-| ConfigError | YAML/JSON parse errors | Fix indentation, check syntax |
+| Category | Examples | Fix Approach |
+|----------|----------|--------------|
+| Environment | Missing deps, wrong runtime | Install deps, use correct runtime |
+| Import/Module | Cannot find module, undefined | Fix import path, install package |
+| Syntax | Invalid syntax, unexpected token | Fix code syntax |
+| Type | Type mismatch, wrong arguments | Fix types, match signatures |
+| Test | Assertion failed, fixture missing | Fix test logic or setup |
+| Build | Dockerfile error, compile error | Fix build configuration |
+
+See `settings/vbw-error-patterns-{language}.json` for language-specific patterns.
 
 ### Diagnosis in Commit Messages
 
