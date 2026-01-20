@@ -2,8 +2,10 @@
 
 ## Test Configuration
 - **Date**: 2026-01-20
-- **Target Project**: /tmp/vbw-shadow (Recipe Pantry API)
+- **Target Project**: /tmp/vbw-shadow (Example Python/Docker Project)
 - **VBW Version**: Pre-targeted-reflection (v2)
+
+> **Note**: These results are from baseline testing. Your project's results will vary based on codebase complexity and validation requirements.
 
 ---
 

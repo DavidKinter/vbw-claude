@@ -2,6 +2,9 @@
 
 **Date**: 2026-01-20
 **VBW Version**: With diagnosis (Phase 2 implementation)
+**Test Environment**: /tmp/vbw-shadow (Example Python/Docker Project)
+
+> **Note**: These results demonstrate the framework's diagnostic capabilities. Your project's metrics will vary based on error frequency and complexity.
 
 ---
 
