@@ -164,6 +164,20 @@ IF path does NOT start with "/tmp/vbw-shadow/":
     FAIL immediately
 ```
 
+### Diagnosis Requirements
+
+When spawning vbw-execute subagent, include in prompt:
+
+```
+DIAGNOSIS PROTOCOL ENABLED:
+On validation failure, subagent MUST:
+1. Parse error message
+2. Classify against known patterns
+3. State diagnosis in commit message
+4. Apply targeted fix
+5. Never retry with identical code
+```
+
 ## Action Plan Template
 
 Present this to user for approval:

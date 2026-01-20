@@ -40,6 +40,19 @@ You are executing a validated action plan in a sandbox environment.
       "passed": true|false
     }
   ],
+  "diagnosis_log": [
+    {
+      "iteration": 1,
+      "error_type": "Environment|ImportError|SyntaxError|etc",
+      "diagnosis": "specific cause identified",
+      "fix_applied": "concrete action taken",
+      "result": "PASS|FAIL"
+    }
+  ],
+  "error_breakdown": {
+    "environment_errors": 0,
+    "code_errors": 0
+  },
   "commit_hash": "abc1234",
   "failure_reason": "only if FAIL"
 }
@@ -50,6 +63,96 @@ You are executing a validated action plan in a sandbox environment.
 - NEVER skip validation steps
 - NEVER report PASS without string match confirmation
 - Include EXACT validation output in report
+- ALWAYS run Failure Diagnosis Protocol before retrying (see below)
+
+## Failure Diagnosis Protocol (REQUIRED on validation failure)
+
+When ANY validation fails, perform diagnosis BEFORE retrying:
+
+### Step 1: Parse Error Message
+```
+Extract from validation output:
+- Error type (first line, e.g., "ImportError", "SyntaxError")
+- Error message (description after colon)
+- Location (file:line if present)
+- Context (surrounding lines if shown)
+```
+
+### Step 2: Classify Failure Type
+```
+Match against known patterns:
+
+| Pattern | Type | Fix Strategy |
+|---------|------|--------------|
+| `ModuleNotFoundError` + module in pyproject.toml | Environment | Use `uv run` prefix |
+| `ModuleNotFoundError: No module named 'pytest'` | Environment | Run `uv sync --extra dev` |
+| `ModuleNotFoundError: No module named 'src.X'` | ImportError | Check file path exists |
+| `cannot import name '(\w+)' from '(\w+)'` | ImportError | Verify export exists |
+| `IndentationError` | SyntaxError | Fix indentation (4 spaces) |
+| `expected an indented block` | SyntaxError | Add indentation after colon |
+| `SyntaxError: invalid syntax` | SyntaxError | Check colons, parens, brackets |
+| `NameError: name '(\w+)' is not defined` | NameError | Add import or define variable |
+| `TypeError: takes (\d+) arguments but (\d+) given` | TypeError | Match argument count |
+| `fixture '(\w+)' not found` | FixtureError | Add fixture to conftest.py |
+| `collected 0 items` | CollectionError | Prefix functions with `test_` |
+| `AssertionError: assert .* == .*` | AssertionError | Check code logic or expectation |
+| `dockerfile parse error` | BuildError | Check Dockerfile syntax |
+| `yaml.scanner.ScannerError` | ComposeError | Fix YAML indentation |
+```
+
+### Step 3: Generate Fix Hypothesis
+```
+Based on classification, state:
+1. DIAGNOSIS: [error type] - [specific cause]
+2. FIX: [concrete action to take]
+3. VERIFICATION: [how to confirm fix worked]
+
+Example:
+DIAGNOSIS: Environment - sqlalchemy in pyproject.toml but ModuleNotFoundError
+FIX: Prefix validation command with `uv run`
+VERIFICATION: Module imports successfully with `uv run python -c "import sqlalchemy"`
+```
+
+### Step 4: Apply Fix and Retry
+```
+1. Make the diagnosed change
+2. Commit: git add -A && git commit -m "VBW: Iteration N - Fix [diagnosis]"
+3. Re-run ONLY the failed validation first
+4. If passes, continue to remaining validations
+5. If fails again with SAME error, try alternative fix
+6. If fails with DIFFERENT error, restart diagnosis
+```
+
+### Step 5: Document in Report
+```
+For each iteration, include:
+{
+  "iteration": N,
+  "diagnosis": "ImportError - wrong module path",
+  "fix_applied": "Changed import from src.services.ai to src.services.pantry_ai",
+  "result": "PASS|FAIL"
+}
+```
+
+### Environment vs Code Error Detection
+```
+IMPORTANT: Before assuming code error, check:
+1. Is the missing module in pyproject.toml?
+   → Yes: Environment error, use `uv run`
+2. Is the missing module a dev dependency (pytest, etc.)?
+   → Yes: Run `uv sync --extra dev`
+3. Does the file exist at the import path?
+   → No: Code error, fix import path
+
+Environment errors should NOT count against code quality.
+Track separately in report.
+```
+
+### CONSTRAINTS
+- NEVER skip validation based on diagnosis
+- NEVER retry with identical code
+- ALWAYS document diagnosis in commit message
+- If diagnosis is uncertain, state: "UNCERTAIN: trying [approach]"
 
 ## Tool Restrictions (ENFORCED)
 

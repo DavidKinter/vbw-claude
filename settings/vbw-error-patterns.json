@@ -1,0 +1,126 @@
+{
+  "version": "1.0.0",
+  "description": "VBW Error Pattern Reference for Targeted Reflection",
+  "baseline_reference": "baseline/results.md",
+  "error_patterns": [
+    {
+      "id": "env_wrong_python",
+      "pattern": "ModuleNotFoundError.*module in pyproject.toml",
+      "type": "EnvironmentError",
+      "severity": "blocking",
+      "fix_strategy": "Use 'uv run' prefix for all Python validation commands",
+      "common_causes": [
+        "Validation ran with system Python instead of project venv",
+        "Missing uv run prefix"
+      ],
+      "baseline_frequency": "60% of tasks (3/5)"
+    },
+    {
+      "id": "env_missing_dev_deps",
+      "pattern": "ModuleNotFoundError: No module named 'pytest'",
+      "type": "EnvironmentError",
+      "severity": "blocking",
+      "fix_strategy": "Run 'uv sync --extra dev' before validation",
+      "common_causes": [
+        "Dev dependencies not installed",
+        "Only main dependencies synced"
+      ]
+    },
+    {
+      "id": "import_module_not_found",
+      "pattern": "ModuleNotFoundError: No module named '([^']+)'",
+      "type": "ImportError",
+      "severity": "blocking",
+      "fix_strategy": "Check import path, verify module file exists at expected location",
+      "common_causes": [
+        "Typo in module name",
+        "Wrong directory structure",
+        "Missing __init__.py"
+      ]
+    },
+    {
+      "id": "import_name_not_found",
+      "pattern": "cannot import name '([^']+)' from '([^']+)'",
+      "type": "ImportError",
+      "severity": "blocking",
+      "fix_strategy": "Verify the name is actually exported from the module",
+      "common_causes": [
+        "Function/class renamed",
+        "Name not exported in __all__",
+        "Circular import"
+      ]
+    },
+    {
+      "id": "syntax_indentation",
+      "pattern": "IndentationError",
+      "type": "SyntaxError",
+      "severity": "blocking",
+      "fix_strategy": "Fix indentation to match surrounding code (4 spaces per level)",
+      "common_causes": [
+        "Mixed tabs and spaces",
+        "Wrong nesting level",
+        "Missing indent after colon"
+      ]
+    },
+    {
+      "id": "syntax_general",
+      "pattern": "SyntaxError: invalid syntax",
+      "type": "SyntaxError",
+      "severity": "blocking",
+      "fix_strategy": "Check line for typos, missing colons, unmatched brackets",
+      "common_causes": [
+        "Missing colon after def/if/for",
+        "Unmatched parentheses/brackets",
+        "Invalid character"
+      ]
+    },
+    {
+      "id": "test_fixture_not_found",
+      "pattern": "fixture '([^']+)' not found",
+      "type": "FixtureError",
+      "severity": "blocking",
+      "fix_strategy": "Add fixture to conftest.py or use existing fixture name",
+      "common_causes": [
+        "Fixture name typo",
+        "Fixture not in conftest.py",
+        "Fixture scope mismatch"
+      ]
+    },
+    {
+      "id": "test_assertion_value",
+      "pattern": "AssertionError: assert .* == ",
+      "type": "AssertionError",
+      "severity": "blocking",
+      "fix_strategy": "Compare expected vs actual values, check for off-by-one or type differences",
+      "common_causes": [
+        "Wrong expected value",
+        "Type mismatch (str vs int)",
+        "Floating point precision"
+      ]
+    },
+    {
+      "id": "docker_build_fail",
+      "pattern": "ERROR.*Dockerfile",
+      "type": "BuildError",
+      "severity": "blocking",
+      "fix_strategy": "Check Dockerfile syntax, verify COPY source files exist",
+      "common_causes": [
+        "Invalid instruction",
+        "Missing FROM",
+        "COPY source not in context"
+      ]
+    },
+    {
+      "id": "yaml_syntax",
+      "pattern": "yaml\\.scanner\\.ScannerError",
+      "type": "ConfigError",
+      "severity": "blocking",
+      "fix_strategy": "Fix YAML indentation (2 spaces), check for tab characters",
+      "common_causes": [
+        "Tab instead of spaces",
+        "Wrong indentation level",
+        "Missing dash for list items"
+      ]
+    }
+  ]
+}
