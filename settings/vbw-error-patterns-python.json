@@ -9,7 +9,7 @@
       "pattern": "ModuleNotFoundError.*module in pyproject.toml",
       "type": "EnvironmentError",
       "severity": "blocking",
-      "fix_strategy": "Use 'uv run' prefix for all Python validation commands",
+      "fix_strategy": "Use virtual environment prefix (uv run, poetry run, or activate venv first)",
       "common_causes": [
         "Validation ran with system Python instead of project venv",
         "Missing uv run prefix"
@@ -20,7 +20,7 @@
       "pattern": "ModuleNotFoundError: No module named 'pytest'",
       "type": "EnvironmentError",
       "severity": "blocking",
-      "fix_strategy": "Run 'uv sync --extra dev' before validation",
+      "fix_strategy": "Install dev dependencies (uv sync --extra dev, poetry install --with dev, or pip install -e '.[dev]')",
       "common_causes": [
         "Dev dependencies not installed",
         "Only main dependencies synced"

@@ -72,7 +72,6 @@ rsync -a --delete \
     --exclude='.vscode' \
     --exclude='*.log' \
     --exclude='vendor' \
-    --exclude='Cargo.lock' \
     "$SOURCE_PATH/" "$SHADOW_PATH/"
 
 # Initialize fresh git repo in shadow
