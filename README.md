@@ -37,7 +37,43 @@ After install, these slash commands are available in Claude Code:
 1. rsync project to `/tmp/vbw-shadow/`
 2. Make changes in shadow
 3. Run validations (syntax, imports, tests)
-4. If all pass, copy back to real project
+4. If validation fails → **Diagnose → Fix → Retry** (up to 5 iterations)
+5. If all pass, copy back to real project
+
+## Targeted Reflection (v1.1.0)
+
+When validation fails, the execution subagent now performs structured diagnosis:
+
+```
+FAIL → Parse Error → Classify Type → Apply Fix Strategy → Retry
+```
+
+### Supported Error Types
+
+| Error Type | Pattern | Fix Strategy |
+|------------|---------|--------------|
+| ImportError | `ModuleNotFoundError` | Check import path, verify file exists |
+| SyntaxError | `IndentationError`, `invalid syntax` | Fix indentation, check colons/brackets |
+| FixtureError | `fixture '...' not found` | Use correct fixture name from conftest.py |
+| AssertionError | `assert ... == ...` | Check expected vs actual values |
+| BuildError | Docker build failures | Check Dockerfile syntax and paths |
+| ConfigError | YAML/JSON parse errors | Fix indentation, check syntax |
+
+### Diagnosis in Commit Messages
+
+Failed iterations include diagnosis tags:
+```
+VBW: Iter 2 - [ImportError] Fixed module path src.services.pantry_ai
+VBW: Iter 3 - [SyntaxError] Added missing colon after function def
+```
+
+### Results
+
+- **28.6% iteration reduction** (1.4 → 1.0 mean iterations)
+- **100% diagnosis accuracy** across tested error types
+- **Zero validation bypasses** (safety maintained)
+
+See `docs/26-01-20_vbw-targeted-reflection-playbook.md` for implementation details.
 
 ## Config
 
