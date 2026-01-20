@@ -1,2 +1,29 @@
-.DS_Store/
-.idea
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# VBW shadow directory (should never be committed)
+/tmp/vbw-shadow/
+
+# Local settings (user-specific)
+.claude/settings.local.json
