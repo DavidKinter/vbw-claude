@@ -26,4 +26,4 @@ build/
 /tmp/vbw-shadow/
 
 # Local settings (user-specific)
-.claude/settings.local.json
+.claude/
