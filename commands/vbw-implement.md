@@ -93,7 +93,7 @@ Implements a task using Validate-Before-Write protocol with full skill orchestra
 
 **Step 2.1: Shadow Sync**
 ```bash
-./aux_utils/vbw_shadow_sync.sh
+./utils/vbw_shadow_sync.sh
 ```
 - Creates /tmp/vbw-shadow/ with rsync
 - Initializes fresh git repo

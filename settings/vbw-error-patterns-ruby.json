@@ -1,0 +1,128 @@
+{
+  "version": "1.0.0",
+  "language": "ruby",
+  "description": "Ruby/Rails error patterns for VBW diagnosis",
+  "tools": ["ruby", "bundle", "rake", "rspec", "rails"],
+  "error_patterns": [
+    {
+      "id": "ruby_name_error",
+      "pattern": "NameError.*undefined local variable or method `(\\w+)'",
+      "type": "NameError",
+      "severity": "blocking",
+      "fix_strategy": "Define the variable/method or fix typo",
+      "common_causes": [
+        "Typo in variable name",
+        "Variable not defined",
+        "Method not defined"
+      ]
+    },
+    {
+      "id": "ruby_no_method",
+      "pattern": "NoMethodError.*undefined method `(\\w+)' for",
+      "type": "NoMethodError",
+      "severity": "blocking",
+      "fix_strategy": "Check method name, require correct file, or fix receiver type",
+      "common_causes": [
+        "Method doesn't exist",
+        "Wrong receiver type",
+        "Missing require"
+      ]
+    },
+    {
+      "id": "ruby_load_error",
+      "pattern": "LoadError.*cannot load such file -- (\\S+)",
+      "type": "LoadError",
+      "severity": "blocking",
+      "fix_strategy": "Add gem to Gemfile and run 'bundle install'",
+      "common_causes": [
+        "Gem not installed",
+        "Wrong require path",
+        "Missing bundle install"
+      ]
+    },
+    {
+      "id": "ruby_syntax_error",
+      "pattern": "SyntaxError.*syntax error, unexpected (\\w+)",
+      "type": "SyntaxError",
+      "severity": "blocking",
+      "fix_strategy": "Fix syntax based on error message",
+      "common_causes": [
+        "Missing end keyword",
+        "Unmatched brackets",
+        "Invalid syntax"
+      ]
+    },
+    {
+      "id": "ruby_argument_error",
+      "pattern": "ArgumentError.*wrong number of arguments \\(given (\\d+), expected (\\d+)\\)",
+      "type": "ArgumentError",
+      "severity": "blocking",
+      "fix_strategy": "Match argument count to method signature",
+      "common_causes": [
+        "Too few arguments",
+        "Too many arguments",
+        "Method signature changed"
+      ]
+    },
+    {
+      "id": "ruby_type_error",
+      "pattern": "TypeError.*(\\S+) can't be coerced into (\\S+)",
+      "type": "TypeError",
+      "severity": "blocking",
+      "fix_strategy": "Convert types explicitly or fix variable type",
+      "common_causes": [
+        "String/Integer mismatch",
+        "nil where object expected",
+        "Wrong type passed"
+      ]
+    },
+    {
+      "id": "ruby_bundle_install",
+      "pattern": "Could not find gem '(\\S+)'",
+      "type": "BundleError",
+      "severity": "blocking",
+      "fix_strategy": "Run 'bundle install' or add gem to Gemfile",
+      "common_causes": [
+        "Gem not in Gemfile",
+        "bundle install not run",
+        "Gem source unavailable"
+      ]
+    },
+    {
+      "id": "ruby_rspec_failure",
+      "pattern": "expected: (.*)\\s+got: (.*)",
+      "type": "TestError",
+      "severity": "blocking",
+      "fix_strategy": "Fix test expectation or code logic",
+      "common_causes": [
+        "Wrong expected value",
+        "Code logic error",
+        "Test setup issue"
+      ]
+    },
+    {
+      "id": "ruby_constant_error",
+      "pattern": "NameError.*uninitialized constant (\\S+)",
+      "type": "NameError",
+      "severity": "blocking",
+      "fix_strategy": "Require the file defining the constant or fix constant name",
+      "common_causes": [
+        "Missing require",
+        "Typo in class name",
+        "Autoload path issue"
+      ]
+    },
+    {
+      "id": "ruby_nil_error",
+      "pattern": "NoMethodError.*undefined method `(\\w+)' for nil:NilClass",
+      "type": "NilError",
+      "severity": "blocking",
+      "fix_strategy": "Add nil check or ensure value is not nil",
+      "common_causes": [
+        "Method returned nil",
+        "Variable not initialized",
+        "Missing nil check"
+      ]
+    }
+  ]
+}

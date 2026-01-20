@@ -11,7 +11,31 @@
       ".venv",
       "*.pyc",
       ".pytest_cache",
-      "node_modules"
-    ]
+      "node_modules",
+      "target",
+      "dist",
+      "build",
+      ".next",
+      "vendor"
+    ],
+    "error_patterns": {
+      "description": "Language-specific error pattern files for diagnosis",
+      "pattern_files": "settings/vbw-error-patterns-{language}.json",
+      "available_languages": ["python", "typescript", "go", "java", "csharp", "ruby", "php", "rust", "swift", "kotlin", "cpp"],
+      "auto_detect": true,
+      "detection_rules": {
+        "python": ["pyproject.toml", "setup.py", "requirements.txt", "*.py"],
+        "typescript": ["package.json", "tsconfig.json", "*.ts", "*.tsx"],
+        "go": ["go.mod", "go.sum", "*.go"],
+        "java": ["pom.xml", "build.gradle", "*.java"],
+        "csharp": ["*.csproj", "*.sln", "*.cs"],
+        "ruby": ["Gemfile", "Rakefile", "*.rb"],
+        "php": ["composer.json", "*.php"],
+        "rust": ["Cargo.toml", "*.rs"],
+        "swift": ["Package.swift", "*.swift", "*.xcodeproj"],
+        "kotlin": ["build.gradle.kts", "*.kt", "*.kts"],
+        "cpp": ["CMakeLists.txt", "Makefile", "*.cpp", "*.c", "*.h", "*.hpp"]
+      }
+    }
   }
 }

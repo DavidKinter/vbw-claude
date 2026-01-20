@@ -1,0 +1,128 @@
+{
+  "version": "1.0.0",
+  "language": "swift",
+  "description": "Swift/iOS error patterns for VBW diagnosis",
+  "tools": ["swift", "swiftc", "xcodebuild", "xctest"],
+  "error_patterns": [
+    {
+      "id": "swift_unresolved_identifier",
+      "pattern": "use of unresolved identifier '(\\w+)'",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Import module, declare variable, or fix typo",
+      "common_causes": [
+        "Missing import",
+        "Variable not declared",
+        "Typo in identifier"
+      ]
+    },
+    {
+      "id": "swift_cannot_convert",
+      "pattern": "cannot convert value of type '(\\S+)' to expected argument type '(\\S+)'",
+      "type": "TypeError",
+      "severity": "blocking",
+      "fix_strategy": "Add type conversion or fix argument type",
+      "common_causes": [
+        "Type mismatch",
+        "Optional vs non-optional",
+        "Wrong generic type"
+      ]
+    },
+    {
+      "id": "swift_no_member",
+      "pattern": "value of type '(\\S+)' has no member '(\\w+)'",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Check property/method name, import extension, or fix type",
+      "common_causes": [
+        "Property doesn't exist",
+        "Method name typo",
+        "Missing extension import"
+      ]
+    },
+    {
+      "id": "swift_optional_unwrap",
+      "pattern": "value of optional type '(\\S+)\\?' must be unwrapped",
+      "type": "OptionalError",
+      "severity": "blocking",
+      "fix_strategy": "Use optional binding (if let), nil coalescing (??), or force unwrap (!)",
+      "common_causes": [
+        "Need to unwrap optional",
+        "Should use optional chaining",
+        "Missing nil check"
+      ]
+    },
+    {
+      "id": "swift_force_unwrap_nil",
+      "pattern": "Unexpectedly found nil while unwrapping an Optional",
+      "type": "RuntimeError",
+      "severity": "blocking",
+      "fix_strategy": "Use guard let or if let instead of force unwrap",
+      "common_causes": [
+        "Force unwrapping nil",
+        "IBOutlet not connected",
+        "Optional chain returned nil"
+      ]
+    },
+    {
+      "id": "swift_missing_argument",
+      "pattern": "missing argument for parameter '(\\w+)' in call",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Add missing argument or use default value",
+      "common_causes": [
+        "Required parameter missing",
+        "Wrong function overload",
+        "API changed"
+      ]
+    },
+    {
+      "id": "swift_module_not_found",
+      "pattern": "no such module '(\\w+)'",
+      "type": "ModuleError",
+      "severity": "blocking",
+      "fix_strategy": "Add to Package.swift dependencies or CocoaPods/Carthage",
+      "common_causes": [
+        "Module not installed",
+        "Missing from package dependencies",
+        "Build configuration issue"
+      ]
+    },
+    {
+      "id": "swift_protocol_conformance",
+      "pattern": "type '(\\S+)' does not conform to protocol '(\\S+)'",
+      "type": "ProtocolError",
+      "severity": "blocking",
+      "fix_strategy": "Implement required protocol methods/properties",
+      "common_causes": [
+        "Missing required method",
+        "Wrong method signature",
+        "Missing associated type"
+      ]
+    },
+    {
+      "id": "swift_xctest_failure",
+      "pattern": "XCTAssert.*failed",
+      "type": "TestError",
+      "severity": "blocking",
+      "fix_strategy": "Fix test expectation or code logic",
+      "common_causes": [
+        "Wrong expected value",
+        "Code logic error",
+        "Async test timing"
+      ]
+    },
+    {
+      "id": "swift_access_control",
+      "pattern": "'(\\w+)' is inaccessible due to '(\\w+)' protection level",
+      "type": "AccessError",
+      "severity": "blocking",
+      "fix_strategy": "Change access level or access through public API",
+      "common_causes": [
+        "Private member access",
+        "Internal from different module",
+        "Need to expose API"
+      ]
+    }
+  ]
+}

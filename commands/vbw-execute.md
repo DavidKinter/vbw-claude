@@ -80,24 +80,27 @@ Extract from validation output:
 
 ### Step 2: Classify Failure Type
 ```
-Match against known patterns:
+Match against language-specific error patterns.
 
-| Pattern | Type | Fix Strategy |
-|---------|------|--------------|
-| `ModuleNotFoundError` + module in pyproject.toml | Environment | Use `uv run` prefix |
-| `ModuleNotFoundError: No module named 'pytest'` | Environment | Run `uv sync --extra dev` |
-| `ModuleNotFoundError: No module named 'src.X'` | ImportError | Check file path exists |
-| `cannot import name '(\w+)' from '(\w+)'` | ImportError | Verify export exists |
-| `IndentationError` | SyntaxError | Fix indentation (4 spaces) |
-| `expected an indented block` | SyntaxError | Add indentation after colon |
-| `SyntaxError: invalid syntax` | SyntaxError | Check colons, parens, brackets |
-| `NameError: name '(\w+)' is not defined` | NameError | Add import or define variable |
-| `TypeError: takes (\d+) arguments but (\d+) given` | TypeError | Match argument count |
-| `fixture '(\w+)' not found` | FixtureError | Add fixture to conftest.py |
-| `collected 0 items` | CollectionError | Prefix functions with `test_` |
-| `AssertionError: assert .* == .*` | AssertionError | Check code logic or expectation |
-| `dockerfile parse error` | BuildError | Check Dockerfile syntax |
-| `yaml.scanner.ScannerError` | ComposeError | Fix YAML indentation |
+PATTERN FILES (see settings/vbw-error-patterns-{language}.json):
+- Python: vbw-error-patterns-python.json
+- TypeScript: vbw-error-patterns-typescript.json
+- Go: vbw-error-patterns-go.json
+
+LANGUAGE DETECTION (from project files):
+- Python: pyproject.toml, setup.py, requirements.txt, *.py
+- TypeScript: package.json, tsconfig.json, *.ts, *.tsx
+- Go: go.mod, go.sum, *.go
+
+COMMON ERROR CATEGORIES:
+| Category | Examples | Fix Approach |
+|----------|----------|--------------|
+| Environment | Missing deps, wrong runtime | Install deps, use correct runtime |
+| Import/Module | Cannot find module, undefined | Fix import path, install package |
+| Syntax | Invalid syntax, unexpected token | Fix code syntax |
+| Type | Type mismatch, wrong arguments | Fix types, match signatures |
+| Test | Assertion failed, fixture missing | Fix test logic or setup |
+| Build | Dockerfile error, compile error | Fix build configuration |
 ```
 
 ### Step 3: Generate Fix Hypothesis
@@ -136,16 +139,24 @@ For each iteration, include:
 
 ### Environment vs Code Error Detection
 ```
-IMPORTANT: Before assuming code error, check:
-1. Is the missing module in pyproject.toml?
-   → Yes: Environment error, use `uv run`
-2. Is the missing module a dev dependency (pytest, etc.)?
-   → Yes: Run `uv sync --extra dev`
-3. Does the file exist at the import path?
-   → No: Code error, fix import path
+IMPORTANT: Before assuming code error, check for environment issues:
 
-Environment errors should NOT count against code quality.
-Track separately in report.
+PYTHON:
+1. Is module in pyproject.toml? → Use `uv run` prefix
+2. Is it a dev dependency? → Run `uv sync --extra dev`
+
+TYPESCRIPT/NODE:
+1. Is package in package.json? → Run `npm install` or `pnpm install`
+2. Are types missing? → Install @types/ package
+
+GO:
+1. Is module in go.mod? → Run `go mod tidy`
+2. Is it a build issue? → Run `go build ./...`
+
+GENERAL:
+- Does the file exist at the import path? → Code error, fix path
+- Environment errors should NOT count against code quality
+- Track separately in report
 ```
 
 ### CONSTRAINTS

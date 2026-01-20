@@ -1,7 +1,8 @@
 {
   "version": "1.0.0",
-  "description": "VBW Error Pattern Reference for Targeted Reflection",
-  "baseline_reference": "baseline/results.md",
+  "language": "python",
+  "description": "Python/pytest error patterns for VBW diagnosis (includes common Docker/YAML patterns)",
+  "tools": ["uv", "pytest", "python", "pip"],
   "error_patterns": [
     {
       "id": "env_wrong_python",

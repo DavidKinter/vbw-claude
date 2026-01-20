@@ -1,0 +1,140 @@
+{
+  "version": "1.0.0",
+  "language": "cpp",
+  "description": "C/C++ error patterns for VBW diagnosis",
+  "tools": ["gcc", "g++", "clang", "clang++", "cmake", "make"],
+  "error_patterns": [
+    {
+      "id": "cpp_undeclared_identifier",
+      "pattern": "use of undeclared identifier '(\\w+)'",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Include header, declare variable, or fix typo",
+      "common_causes": [
+        "Missing #include",
+        "Variable not declared",
+        "Typo in identifier"
+      ]
+    },
+    {
+      "id": "cpp_undefined_reference",
+      "pattern": "undefined reference to `(\\S+)'",
+      "type": "LinkerError",
+      "severity": "blocking",
+      "fix_strategy": "Link the library or define the function",
+      "common_causes": [
+        "Missing library in linker flags",
+        "Function declared but not defined",
+        "Mismatched symbol names"
+      ]
+    },
+    {
+      "id": "cpp_no_member",
+      "pattern": "no member named '(\\w+)' in '(\\S+)'",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Check member name, include correct header, or fix type",
+      "common_causes": [
+        "Wrong member name",
+        "Incomplete type (forward declaration)",
+        "Private member access"
+      ]
+    },
+    {
+      "id": "cpp_type_mismatch",
+      "pattern": "cannot (convert|initialize).*from '(\\S+)' to '(\\S+)'",
+      "type": "TypeError",
+      "severity": "blocking",
+      "fix_strategy": "Add explicit cast or fix type",
+      "common_causes": [
+        "Implicit conversion not allowed",
+        "Pointer type mismatch",
+        "Missing constructor"
+      ]
+    },
+    {
+      "id": "cpp_no_matching_function",
+      "pattern": "no matching function for call to '(\\S+)'",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Fix argument types or add missing overload",
+      "common_causes": [
+        "Wrong argument types",
+        "Wrong number of arguments",
+        "Function not declared"
+      ]
+    },
+    {
+      "id": "cpp_file_not_found",
+      "pattern": "(fatal error: |error: )(\\S+): No such file or directory|'(\\S+)' file not found",
+      "type": "PreprocessorError",
+      "severity": "blocking",
+      "fix_strategy": "Fix include path or install missing library",
+      "common_causes": [
+        "Wrong include path",
+        "Library not installed",
+        "Missing -I flag"
+      ]
+    },
+    {
+      "id": "cpp_segfault",
+      "pattern": "Segmentation fault|SIGSEGV",
+      "type": "RuntimeError",
+      "severity": "blocking",
+      "fix_strategy": "Check pointer validity, array bounds, and memory access",
+      "common_causes": [
+        "Null pointer dereference",
+        "Buffer overflow",
+        "Use after free"
+      ]
+    },
+    {
+      "id": "cpp_cmake_error",
+      "pattern": "CMake Error.*Could not find (\\S+)",
+      "type": "CMakeError",
+      "severity": "blocking",
+      "fix_strategy": "Install missing package or set CMAKE_PREFIX_PATH",
+      "common_causes": [
+        "Package not installed",
+        "Wrong find_package name",
+        "Path not configured"
+      ]
+    },
+    {
+      "id": "cpp_redefinition",
+      "pattern": "redefinition of '(\\S+)'",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Add include guards or move definition to .cpp",
+      "common_causes": [
+        "Missing include guards",
+        "Multiple definitions",
+        "Header included twice"
+      ]
+    },
+    {
+      "id": "cpp_expected",
+      "pattern": "expected '(\\S+)' (before|after) '(\\S+)'",
+      "type": "SyntaxError",
+      "severity": "blocking",
+      "fix_strategy": "Fix syntax based on error message",
+      "common_causes": [
+        "Missing semicolon",
+        "Missing bracket",
+        "Syntax error"
+      ]
+    },
+    {
+      "id": "cpp_memory_leak",
+      "pattern": "(definitely|possibly) lost: [\\d,]+ bytes",
+      "type": "MemoryError",
+      "severity": "warning",
+      "fix_strategy": "Free allocated memory or use smart pointers",
+      "common_causes": [
+        "Missing delete/free",
+        "Lost pointer reference",
+        "Exception before cleanup"
+      ]
+    }
+  ]
+}

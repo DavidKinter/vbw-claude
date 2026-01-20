@@ -125,7 +125,7 @@ vbw-claude/
 |------|---------|--------------|
 | `commands/vbw-execute.md` | Execution subagent | Add Failure Diagnosis Protocol section |
 | `commands/vbw-implement.md` | Orchestrator | Add diagnosis requirement for subagent |
-| `settings/vbw-error-patterns.json` | NEW | Error pattern lookup table |
+| `settings/vbw-error-patterns-{lang}.json` | NEW | Language-specific error pattern files (python, typescript, go) |
 
 ### Installation Paths (Post-Install)
 
@@ -517,7 +517,9 @@ grep -c "ModuleNotFoundError" commands/vbw-execute.md
 
 ### Step 2.2: Add Error Pattern Reference File
 
-**File**: `settings/vbw-error-patterns.json`
+**File**: `settings/vbw-error-patterns-python.json` (and other language-specific files)
+
+> **Note**: Error patterns are now language-specific. See `settings/vbw-error-patterns-{lang}.json` for python, typescript, go.
 
 ```json
 {

@@ -1,0 +1,128 @@
+{
+  "version": "1.0.0",
+  "language": "rust",
+  "description": "Rust error patterns for VBW diagnosis",
+  "tools": ["cargo", "rustc", "clippy"],
+  "error_patterns": [
+    {
+      "id": "rust_cannot_find",
+      "pattern": "cannot find (value|type|macro|crate) `(\\w+)` in",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Add use statement, import crate, or define the item",
+      "common_causes": [
+        "Missing use statement",
+        "Item not in scope",
+        "Crate not in Cargo.toml"
+      ]
+    },
+    {
+      "id": "rust_borrow_error",
+      "pattern": "cannot borrow `(\\w+)` as mutable.*already borrowed as",
+      "type": "BorrowError",
+      "severity": "blocking",
+      "fix_strategy": "Restructure code to avoid multiple borrows or use RefCell/Rc",
+      "common_causes": [
+        "Multiple mutable borrows",
+        "Mutable and immutable borrow conflict",
+        "Borrow scope too large"
+      ]
+    },
+    {
+      "id": "rust_move_error",
+      "pattern": "use of moved value: `(\\w+)`",
+      "type": "MoveError",
+      "severity": "blocking",
+      "fix_strategy": "Clone the value, use reference, or restructure ownership",
+      "common_causes": [
+        "Value moved in loop",
+        "Value used after move",
+        "Missing Clone derive"
+      ]
+    },
+    {
+      "id": "rust_type_mismatch",
+      "pattern": "expected `(\\S+)`, found `(\\S+)`",
+      "type": "TypeError",
+      "severity": "blocking",
+      "fix_strategy": "Fix type annotation, convert types, or change return type",
+      "common_causes": [
+        "Wrong return type",
+        "Type inference failed",
+        "Generic type mismatch"
+      ]
+    },
+    {
+      "id": "rust_trait_not_impl",
+      "pattern": "the trait `(\\S+)` is not implemented for `(\\S+)`",
+      "type": "TraitError",
+      "severity": "blocking",
+      "fix_strategy": "Implement the trait, derive it, or use a different type",
+      "common_causes": [
+        "Missing derive macro",
+        "Trait bounds not satisfied",
+        "Need manual impl"
+      ]
+    },
+    {
+      "id": "rust_lifetime_error",
+      "pattern": "lifetime .* required|borrowed value does not live long enough",
+      "type": "LifetimeError",
+      "severity": "blocking",
+      "fix_strategy": "Add lifetime annotations or restructure to extend lifetime",
+      "common_causes": [
+        "Reference outlives data",
+        "Missing lifetime parameter",
+        "Struct needs lifetime"
+      ]
+    },
+    {
+      "id": "rust_cargo_dependency",
+      "pattern": "failed to select a version for the requirement `(\\S+)`",
+      "type": "CargoError",
+      "severity": "blocking",
+      "fix_strategy": "Check version constraints in Cargo.toml",
+      "common_causes": [
+        "Incompatible version requirements",
+        "Crate doesn't exist",
+        "Version yanked"
+      ]
+    },
+    {
+      "id": "rust_unused_warning",
+      "pattern": "unused (variable|import|mut): `(\\w+)`",
+      "type": "Warning",
+      "severity": "warning",
+      "fix_strategy": "Remove unused item or prefix with underscore",
+      "common_causes": [
+        "Leftover from refactoring",
+        "Debug code",
+        "Incomplete implementation"
+      ]
+    },
+    {
+      "id": "rust_test_failure",
+      "pattern": "assertion failed.*left: `(.*)`.*right: `(.*)`",
+      "type": "TestError",
+      "severity": "blocking",
+      "fix_strategy": "Fix test expectation or code logic",
+      "common_causes": [
+        "Wrong expected value",
+        "Code logic error",
+        "Test setup issue"
+      ]
+    },
+    {
+      "id": "rust_panic",
+      "pattern": "thread '(.*)' panicked at",
+      "type": "PanicError",
+      "severity": "blocking",
+      "fix_strategy": "Handle error case with Result/Option or fix panic source",
+      "common_causes": [
+        "Unwrap on None/Err",
+        "Index out of bounds",
+        "Explicit panic!"
+      ]
+    }
+  ]
+}

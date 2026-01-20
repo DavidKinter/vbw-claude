@@ -1,0 +1,153 @@
+{
+  "version": "1.0.0",
+  "language": "go",
+  "description": "Go error patterns for VBW diagnosis",
+  "tools": ["go", "go test", "go build", "go vet", "golangci-lint"],
+  "error_patterns": [
+    {
+      "id": "go_undefined",
+      "pattern": "undefined: ([\\w.]+)",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Import package, define variable/function, or fix typo",
+      "common_causes": [
+        "Missing import statement",
+        "Typo in identifier name",
+        "Variable not declared",
+        "Function not defined"
+      ]
+    },
+    {
+      "id": "go_unused_variable",
+      "pattern": "([\\w]+) declared and not used",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Use the variable, remove it, or assign to blank identifier _",
+      "common_causes": [
+        "Leftover from refactoring",
+        "Incomplete implementation",
+        "Debug code not removed"
+      ]
+    },
+    {
+      "id": "go_unused_import",
+      "pattern": "imported and not used: \"([^\"]+)\"",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Remove unused import or use the package",
+      "common_causes": [
+        "Leftover from refactoring",
+        "Import added but code not written",
+        "Replaced with different package"
+      ]
+    },
+    {
+      "id": "go_type_mismatch",
+      "pattern": "cannot use ([^(]+) \\(.*\\) as ([^\\s]+)",
+      "type": "TypeError",
+      "severity": "blocking",
+      "fix_strategy": "Fix type conversion, use correct type, or update function signature",
+      "common_causes": [
+        "Wrong type passed to function",
+        "Interface not implemented",
+        "Missing type conversion"
+      ]
+    },
+    {
+      "id": "go_not_enough_args",
+      "pattern": "not enough arguments in call to ([\\w.]+)",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Add missing arguments to function call",
+      "common_causes": [
+        "Function signature changed",
+        "Missing required parameter",
+        "Copy-paste error"
+      ]
+    },
+    {
+      "id": "go_too_many_args",
+      "pattern": "too many arguments in call to ([\\w.]+)",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Remove extra arguments from function call",
+      "common_causes": [
+        "Function signature changed",
+        "Variadic function misuse",
+        "Copy-paste error"
+      ]
+    },
+    {
+      "id": "go_package_not_found",
+      "pattern": "package ([\\w./]+) is not in",
+      "type": "ModuleError",
+      "severity": "blocking",
+      "fix_strategy": "Run 'go mod tidy' or 'go get' to fetch package",
+      "common_causes": [
+        "Module not downloaded",
+        "Wrong import path",
+        "Private repo without access"
+      ]
+    },
+    {
+      "id": "go_module_not_found",
+      "pattern": "go: module ([\\w./]+).*not found",
+      "type": "ModuleError",
+      "severity": "blocking",
+      "fix_strategy": "Check module path, run 'go mod tidy', verify go.mod",
+      "common_causes": [
+        "Typo in import path",
+        "Module moved or renamed",
+        "Network/proxy issues"
+      ]
+    },
+    {
+      "id": "go_test_failed",
+      "pattern": "--- FAIL: ([\\w/]+)",
+      "type": "TestError",
+      "severity": "blocking",
+      "fix_strategy": "Check test assertion, fix code logic, or update expected value",
+      "common_causes": [
+        "Code logic incorrect",
+        "Expected value wrong",
+        "Test setup incomplete"
+      ]
+    },
+    {
+      "id": "go_panic",
+      "pattern": "panic: (.+)",
+      "type": "RuntimeError",
+      "severity": "blocking",
+      "fix_strategy": "Add nil checks, bounds checking, or error handling",
+      "common_causes": [
+        "Nil pointer dereference",
+        "Index out of range",
+        "Interface conversion failed"
+      ]
+    },
+    {
+      "id": "go_syntax_error",
+      "pattern": "syntax error: (.+)",
+      "type": "SyntaxError",
+      "severity": "blocking",
+      "fix_strategy": "Fix syntax according to error message",
+      "common_causes": [
+        "Missing comma/semicolon",
+        "Unmatched braces",
+        "Invalid statement"
+      ]
+    },
+    {
+      "id": "go_vet_warning",
+      "pattern": "go: vet: ([\\w.]+): (.+)",
+      "type": "VetWarning",
+      "severity": "warning",
+      "fix_strategy": "Fix code to address vet warning",
+      "common_causes": [
+        "Printf format mismatch",
+        "Unreachable code",
+        "Suspicious construct"
+      ]
+    }
+  ]
+}

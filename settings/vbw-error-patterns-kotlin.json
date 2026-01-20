@@ -1,0 +1,128 @@
+{
+  "version": "1.0.0",
+  "language": "kotlin",
+  "description": "Kotlin/Android error patterns for VBW diagnosis",
+  "tools": ["kotlin", "kotlinc", "gradle", "gradlew"],
+  "error_patterns": [
+    {
+      "id": "kotlin_unresolved_reference",
+      "pattern": "Unresolved reference: (\\w+)",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Add import, declare variable, or fix typo",
+      "common_causes": [
+        "Missing import",
+        "Variable not declared",
+        "Typo in identifier"
+      ]
+    },
+    {
+      "id": "kotlin_type_mismatch",
+      "pattern": "Type mismatch: inferred type is (\\S+) but (\\S+) was expected",
+      "type": "TypeError",
+      "severity": "blocking",
+      "fix_strategy": "Fix type or add explicit conversion",
+      "common_causes": [
+        "Wrong return type",
+        "Nullable vs non-null",
+        "Generic type mismatch"
+      ]
+    },
+    {
+      "id": "kotlin_null_safety",
+      "pattern": "Only safe \\(\\?\\.\\) or non-null asserted \\(!!\\) calls are allowed on a nullable receiver",
+      "type": "NullSafetyError",
+      "severity": "blocking",
+      "fix_strategy": "Use safe call (?.), elvis (?:), or null check",
+      "common_causes": [
+        "Nullable type without safe call",
+        "Missing null check",
+        "Need to handle null case"
+      ]
+    },
+    {
+      "id": "kotlin_npe",
+      "pattern": "NullPointerException|KotlinNullPointerException",
+      "type": "RuntimeError",
+      "severity": "blocking",
+      "fix_strategy": "Use safe calls instead of !! or add null checks",
+      "common_causes": [
+        "Force unwrap (!!) on null",
+        "Platform type was null",
+        "lateinit not initialized"
+      ]
+    },
+    {
+      "id": "kotlin_lateinit",
+      "pattern": "lateinit property (\\w+) has not been initialized",
+      "type": "RuntimeError",
+      "severity": "blocking",
+      "fix_strategy": "Initialize the property before access or use lazy",
+      "common_causes": [
+        "Accessed before initialization",
+        "Missing DI injection",
+        "Lifecycle issue"
+      ]
+    },
+    {
+      "id": "kotlin_val_reassign",
+      "pattern": "Val cannot be reassigned",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Change val to var or restructure code",
+      "common_causes": [
+        "Trying to mutate immutable",
+        "Should be var",
+        "Need different approach"
+      ]
+    },
+    {
+      "id": "kotlin_no_function",
+      "pattern": "None of the following functions can be called with the arguments supplied",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Fix argument types or use correct overload",
+      "common_causes": [
+        "Wrong argument types",
+        "Missing argument",
+        "Wrong overload"
+      ]
+    },
+    {
+      "id": "kotlin_gradle_dependency",
+      "pattern": "Could not resolve (\\S+)",
+      "type": "GradleError",
+      "severity": "blocking",
+      "fix_strategy": "Check dependency coordinates and repository configuration",
+      "common_causes": [
+        "Dependency not found",
+        "Repository not configured",
+        "Version doesn't exist"
+      ]
+    },
+    {
+      "id": "kotlin_test_assertion",
+      "pattern": "expected:<(.*)> but was:<(.*)>",
+      "type": "TestError",
+      "severity": "blocking",
+      "fix_strategy": "Fix test expectation or code logic",
+      "common_causes": [
+        "Wrong expected value",
+        "Code logic error",
+        "Test setup issue"
+      ]
+    },
+    {
+      "id": "kotlin_suspend_context",
+      "pattern": "Suspend function '(\\w+)' should be called only from a coroutine",
+      "type": "CoroutineError",
+      "severity": "blocking",
+      "fix_strategy": "Call from coroutine scope or use runBlocking for tests",
+      "common_causes": [
+        "Missing coroutine scope",
+        "Called from non-suspend function",
+        "Need to launch coroutine"
+      ]
+    }
+  ]
+}

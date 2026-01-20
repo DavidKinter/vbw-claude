@@ -1,0 +1,129 @@
+{
+  "version": "1.0.0",
+  "language": "java",
+  "description": "Java/JVM error patterns for VBW diagnosis",
+  "tools": ["javac", "java", "mvn", "gradle", "junit"],
+  "error_patterns": [
+    {
+      "id": "java_cannot_find_symbol",
+      "pattern": "cannot find symbol.*symbol:\\s*(\\w+)\\s+(\\w+)",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Import the class, fix typo, or declare the variable/method",
+      "common_causes": [
+        "Missing import statement",
+        "Typo in class/method name",
+        "Variable not declared",
+        "Wrong package"
+      ]
+    },
+    {
+      "id": "java_package_not_exist",
+      "pattern": "package (\\S+) does not exist",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Add dependency to pom.xml/build.gradle or fix package name",
+      "common_causes": [
+        "Dependency not declared",
+        "Wrong package path",
+        "Dependency not downloaded"
+      ]
+    },
+    {
+      "id": "java_incompatible_types",
+      "pattern": "incompatible types: (\\S+) cannot be converted to (\\S+)",
+      "type": "TypeError",
+      "severity": "blocking",
+      "fix_strategy": "Add explicit cast, fix return type, or change variable type",
+      "common_causes": [
+        "Wrong return type",
+        "Missing type cast",
+        "Generic type mismatch"
+      ]
+    },
+    {
+      "id": "java_method_not_found",
+      "pattern": "cannot find symbol.*method (\\w+)\\(",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Check method name spelling, verify method exists in class",
+      "common_causes": [
+        "Method name typo",
+        "Wrong argument types",
+        "Method not defined"
+      ]
+    },
+    {
+      "id": "java_class_not_found",
+      "pattern": "ClassNotFoundException: (\\S+)",
+      "type": "RuntimeError",
+      "severity": "blocking",
+      "fix_strategy": "Add class to classpath or fix class name",
+      "common_causes": [
+        "Missing JAR in classpath",
+        "Wrong fully qualified name",
+        "Class not compiled"
+      ]
+    },
+    {
+      "id": "java_null_pointer",
+      "pattern": "NullPointerException",
+      "type": "RuntimeError",
+      "severity": "blocking",
+      "fix_strategy": "Add null checks or ensure object is initialized",
+      "common_causes": [
+        "Uninitialized object",
+        "Method returning null",
+        "Missing null check"
+      ]
+    },
+    {
+      "id": "java_array_index",
+      "pattern": "ArrayIndexOutOfBoundsException",
+      "type": "RuntimeError",
+      "severity": "blocking",
+      "fix_strategy": "Check array bounds before access",
+      "common_causes": [
+        "Loop index exceeds array length",
+        "Off-by-one error",
+        "Empty array access"
+      ]
+    },
+    {
+      "id": "java_maven_dependency",
+      "pattern": "Could not resolve dependencies",
+      "type": "BuildError",
+      "severity": "blocking",
+      "fix_strategy": "Run 'mvn dependency:resolve' or check repository settings",
+      "common_causes": [
+        "Network issues",
+        "Wrong artifact coordinates",
+        "Private repo without credentials"
+      ]
+    },
+    {
+      "id": "java_gradle_build",
+      "pattern": "Execution failed for task ':(\\w+)'",
+      "type": "BuildError",
+      "severity": "blocking",
+      "fix_strategy": "Check task configuration and dependencies",
+      "common_causes": [
+        "Compilation error",
+        "Missing dependency",
+        "Configuration error"
+      ]
+    },
+    {
+      "id": "java_junit_assertion",
+      "pattern": "AssertionError.*expected:<(.*)> but was:<(.*)>",
+      "type": "TestError",
+      "severity": "blocking",
+      "fix_strategy": "Fix test expectation or code logic",
+      "common_causes": [
+        "Wrong expected value",
+        "Code logic error",
+        "Test setup issue"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "version": "1.0.0",
+  "language": "php",
+  "description": "PHP error patterns for VBW diagnosis",
+  "tools": ["php", "composer", "phpunit", "artisan"],
+  "error_patterns": [
+    {
+      "id": "php_undefined_variable",
+      "pattern": "Undefined variable:? \\$?(\\w+)",
+      "type": "Notice",
+      "severity": "blocking",
+      "fix_strategy": "Initialize variable before use or check isset()",
+      "common_causes": [
+        "Variable not initialized",
+        "Typo in variable name",
+        "Scope issue"
+      ]
+    },
+    {
+      "id": "php_class_not_found",
+      "pattern": "Class ['\"]?(\\S+)['\"]? not found",
+      "type": "FatalError",
+      "severity": "blocking",
+      "fix_strategy": "Add use statement, run composer dump-autoload, or check namespace",
+      "common_causes": [
+        "Missing use statement",
+        "Autoloader not updated",
+        "Wrong namespace"
+      ]
+    },
+    {
+      "id": "php_undefined_function",
+      "pattern": "Call to undefined function (\\w+)\\(",
+      "type": "FatalError",
+      "severity": "blocking",
+      "fix_strategy": "Include file defining function or install missing extension",
+      "common_causes": [
+        "Function not defined",
+        "Missing include/require",
+        "PHP extension not loaded"
+      ]
+    },
+    {
+      "id": "php_undefined_method",
+      "pattern": "Call to undefined method (\\S+)::(\\w+)\\(",
+      "type": "FatalError",
+      "severity": "blocking",
+      "fix_strategy": "Define the method or fix method name typo",
+      "common_causes": [
+        "Method doesn't exist",
+        "Typo in method name",
+        "Wrong class used"
+      ]
+    },
+    {
+      "id": "php_type_error",
+      "pattern": "TypeError.*Argument #(\\d+).*must be of type (\\w+), (\\w+) given",
+      "type": "TypeError",
+      "severity": "blocking",
+      "fix_strategy": "Pass correct type or add type conversion",
+      "common_causes": [
+        "Wrong argument type",
+        "Null passed for non-nullable",
+        "Type mismatch"
+      ]
+    },
+    {
+      "id": "php_syntax_error",
+      "pattern": "Parse error: syntax error, unexpected (\\S+)",
+      "type": "ParseError",
+      "severity": "blocking",
+      "fix_strategy": "Fix syntax based on error message",
+      "common_causes": [
+        "Missing semicolon",
+        "Unmatched brackets",
+        "Invalid syntax"
+      ]
+    },
+    {
+      "id": "php_composer_install",
+      "pattern": "requires (\\S+) but it is not installed",
+      "type": "ComposerError",
+      "severity": "blocking",
+      "fix_strategy": "Run 'composer install' or add package to composer.json",
+      "common_causes": [
+        "Dependencies not installed",
+        "composer.lock out of sync",
+        "Missing package"
+      ]
+    },
+    {
+      "id": "php_namespace_error",
+      "pattern": "Namespace declaration statement has to be the very first",
+      "type": "FatalError",
+      "severity": "blocking",
+      "fix_strategy": "Move namespace declaration to first line after <?php",
+      "common_causes": [
+        "Content before namespace",
+        "BOM in file",
+        "Whitespace before <?php"
+      ]
+    },
+    {
+      "id": "php_phpunit_assertion",
+      "pattern": "Failed asserting that (.*) (matches|is|equals) (.*)",
+      "type": "TestError",
+      "severity": "blocking",
+      "fix_strategy": "Fix test expectation or code logic",
+      "common_causes": [
+        "Wrong expected value",
+        "Code logic error",
+        "Test setup issue"
+      ]
+    },
+    {
+      "id": "php_null_error",
+      "pattern": "Attempt to read property .* on null",
+      "type": "Error",
+      "severity": "blocking",
+      "fix_strategy": "Add null check or ensure object is initialized",
+      "common_causes": [
+        "Object is null",
+        "Method returned null",
+        "Missing null check"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,152 @@
+{
+  "version": "1.0.0",
+  "language": "typescript",
+  "description": "TypeScript/Node.js error patterns for VBW diagnosis",
+  "tools": ["npm", "pnpm", "yarn", "tsc", "node", "jest", "vitest"],
+  "error_patterns": [
+    {
+      "id": "ts_module_not_found",
+      "pattern": "Cannot find module '([^']+)'",
+      "type": "ModuleError",
+      "severity": "blocking",
+      "fix_strategy": "Check import path, verify package is installed, check tsconfig paths",
+      "common_causes": [
+        "Package not installed",
+        "Wrong import path",
+        "Missing type declarations (@types/)",
+        "tsconfig paths misconfigured"
+      ]
+    },
+    {
+      "id": "ts_type_error",
+      "pattern": "TS\\d+: Type '([^']+)' is not assignable to type '([^']+)'",
+      "type": "TypeError",
+      "severity": "blocking",
+      "fix_strategy": "Fix type mismatch - cast, update type definition, or fix value",
+      "common_causes": [
+        "Wrong type returned from function",
+        "Missing null/undefined check",
+        "Incompatible generic types"
+      ]
+    },
+    {
+      "id": "ts_property_not_exist",
+      "pattern": "TS\\d+: Property '([^']+)' does not exist on type '([^']+)'",
+      "type": "TypeError",
+      "severity": "blocking",
+      "fix_strategy": "Add property to type, use type assertion, or fix property name",
+      "common_causes": [
+        "Typo in property name",
+        "Missing interface property",
+        "Object shape mismatch"
+      ]
+    },
+    {
+      "id": "ts_argument_count",
+      "pattern": "TS\\d+: Expected \\d+ arguments?, but got \\d+",
+      "type": "TypeError",
+      "severity": "blocking",
+      "fix_strategy": "Match argument count to function signature",
+      "common_causes": [
+        "Missing required argument",
+        "Extra argument passed",
+        "Function signature changed"
+      ]
+    },
+    {
+      "id": "ts_cannot_redeclare",
+      "pattern": "TS\\d+: Cannot redeclare block-scoped variable '([^']+)'",
+      "type": "SyntaxError",
+      "severity": "blocking",
+      "fix_strategy": "Rename variable or use different scope",
+      "common_causes": [
+        "Duplicate variable declaration",
+        "Global type collision",
+        "Missing module declaration"
+      ]
+    },
+    {
+      "id": "npm_missing_dependency",
+      "pattern": "npm ERR! missing: ([^,]+)",
+      "type": "EnvironmentError",
+      "severity": "blocking",
+      "fix_strategy": "Run 'npm install' or add missing package to package.json",
+      "common_causes": [
+        "Dependencies not installed",
+        "package-lock.json out of sync",
+        "Peer dependency missing"
+      ]
+    },
+    {
+      "id": "npm_peer_dep",
+      "pattern": "npm WARN.*peer dep missing",
+      "type": "EnvironmentError",
+      "severity": "warning",
+      "fix_strategy": "Install peer dependency or add to package.json",
+      "common_causes": [
+        "Framework requires specific version",
+        "Plugin needs host package"
+      ]
+    },
+    {
+      "id": "jest_test_failed",
+      "pattern": "expect\\(.*\\)\\.toBe\\(.*\\)",
+      "type": "AssertionError",
+      "severity": "blocking",
+      "fix_strategy": "Compare expected vs actual values, check test logic",
+      "common_causes": [
+        "Wrong expected value",
+        "Async operation not awaited",
+        "Mock not set up correctly"
+      ]
+    },
+    {
+      "id": "jest_cannot_find_module",
+      "pattern": "Cannot find module '([^']+)' from '([^']+)'",
+      "type": "ModuleError",
+      "severity": "blocking",
+      "fix_strategy": "Check jest moduleNameMapper, verify import path",
+      "common_causes": [
+        "Jest module resolution differs from tsc",
+        "Missing moduleNameMapper config",
+        "Path alias not configured"
+      ]
+    },
+    {
+      "id": "eslint_error",
+      "pattern": "error\\s+([\\w/@-]+)",
+      "type": "LintError",
+      "severity": "blocking",
+      "fix_strategy": "Fix code to satisfy ESLint rule or disable rule with comment",
+      "common_causes": [
+        "Code style violation",
+        "Unused variable",
+        "Missing return type"
+      ]
+    },
+    {
+      "id": "syntax_unexpected_token",
+      "pattern": "SyntaxError: Unexpected token",
+      "type": "SyntaxError",
+      "severity": "blocking",
+      "fix_strategy": "Check for missing brackets, commas, or invalid syntax",
+      "common_causes": [
+        "Missing comma in object/array",
+        "Unmatched brackets",
+        "Invalid JSON"
+      ]
+    },
+    {
+      "id": "node_version_mismatch",
+      "pattern": "The engine \"node\" is incompatible",
+      "type": "EnvironmentError",
+      "severity": "blocking",
+      "fix_strategy": "Use correct Node.js version (nvm use, volta pin)",
+      "common_causes": [
+        "Node version too old",
+        "engines field in package.json",
+        "Volta/nvm not activated"
+      ]
+    }
+  ]
+}

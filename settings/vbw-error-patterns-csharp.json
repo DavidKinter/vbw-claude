@@ -1,0 +1,127 @@
+{
+  "version": "1.0.0",
+  "language": "csharp",
+  "description": "C#/.NET error patterns for VBW diagnosis",
+  "tools": ["dotnet", "msbuild", "nuget", "xunit", "nunit"],
+  "error_patterns": [
+    {
+      "id": "cs_type_not_found",
+      "pattern": "CS0246.*type or namespace name '(\\w+)' could not be found",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Add using directive or install NuGet package",
+      "common_causes": [
+        "Missing using statement",
+        "NuGet package not installed",
+        "Project reference missing"
+      ]
+    },
+    {
+      "id": "cs_name_not_exist",
+      "pattern": "CS0103.*name '(\\w+)' does not exist",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Declare variable, add using, or fix typo",
+      "common_causes": [
+        "Variable not declared",
+        "Typo in identifier",
+        "Out of scope"
+      ]
+    },
+    {
+      "id": "cs_cannot_convert",
+      "pattern": "CS0029.*Cannot implicitly convert type '(\\S+)' to '(\\S+)'",
+      "type": "TypeError",
+      "severity": "blocking",
+      "fix_strategy": "Add explicit cast or change variable type",
+      "common_causes": [
+        "Type mismatch",
+        "Missing cast operator",
+        "Wrong generic type"
+      ]
+    },
+    {
+      "id": "cs_member_not_found",
+      "pattern": "CS1061.*'(\\w+)' does not contain a definition for '(\\w+)'",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Check member name, add extension method using, or fix type",
+      "common_causes": [
+        "Method/property doesn't exist",
+        "Missing extension method namespace",
+        "Wrong object type"
+      ]
+    },
+    {
+      "id": "cs_null_reference",
+      "pattern": "NullReferenceException",
+      "type": "RuntimeError",
+      "severity": "blocking",
+      "fix_strategy": "Add null checks or use null-conditional operator",
+      "common_causes": [
+        "Uninitialized object",
+        "Method returning null",
+        "Missing null check"
+      ]
+    },
+    {
+      "id": "cs_nuget_restore",
+      "pattern": "Unable to resolve '(\\S+)'.*Run a NuGet package restore",
+      "type": "BuildError",
+      "severity": "blocking",
+      "fix_strategy": "Run 'dotnet restore' to restore NuGet packages",
+      "common_causes": [
+        "Packages not restored",
+        "packages.config out of sync",
+        "Network issues"
+      ]
+    },
+    {
+      "id": "cs_msbuild_error",
+      "pattern": "MSBUILD : error (\\w+):",
+      "type": "BuildError",
+      "severity": "blocking",
+      "fix_strategy": "Check .csproj configuration and dependencies",
+      "common_causes": [
+        "Invalid project file",
+        "Missing SDK",
+        "Configuration error"
+      ]
+    },
+    {
+      "id": "cs_async_void",
+      "pattern": "CS1998.*async method lacks 'await'",
+      "type": "CompileWarning",
+      "severity": "warning",
+      "fix_strategy": "Add await or remove async modifier",
+      "common_causes": [
+        "Forgot to await async call",
+        "Unnecessary async modifier",
+        "Sync method marked async"
+      ]
+    },
+    {
+      "id": "cs_xunit_assertion",
+      "pattern": "Assert\\.Equal.*Failure.*Expected: (.*).*Actual: (.*)",
+      "type": "TestError",
+      "severity": "blocking",
+      "fix_strategy": "Fix test expectation or code logic",
+      "common_causes": [
+        "Wrong expected value",
+        "Code logic error",
+        "Test data issue"
+      ]
+    },
+    {
+      "id": "cs_ambiguous_reference",
+      "pattern": "CS0104.*'(\\w+)' is an ambiguous reference",
+      "type": "CompileError",
+      "severity": "blocking",
+      "fix_strategy": "Use fully qualified name or alias the namespace",
+      "common_causes": [
+        "Same name in multiple namespaces",
+        "Conflicting using directives"
+      ]
+    }
+  ]
+}
