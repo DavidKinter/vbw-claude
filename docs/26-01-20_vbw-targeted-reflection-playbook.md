@@ -365,10 +365,10 @@ OUTPUT FORMAT:
 # DIAGNOSIS: Internal module, check path
 
 # BEFORE (wrong):
-from src.services.ai import PantryAI
+from src.services.ai import MyService
 
 # AFTER (correct):
-from src.services.pantry_ai import PantryAI
+from src.services.my_service import MyService
 ```
 
 [Continue for each error type...]
@@ -704,7 +704,7 @@ fs.cpSync(settingsSource, settingsTarget, { recursive: true });
 npx github:DavidKinter/vbw-claude --local
 
 # Or if testing locally before push:
-node /Users/David/Documents/Development/vbw-claude/bin/install.js --local
+node ./vbw-claude/bin/install.js --local
 ```
 
 ### Step 3.2: Run Test Suite with Diagnosis

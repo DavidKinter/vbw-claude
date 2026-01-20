@@ -210,7 +210,7 @@ IF ANY check fails:
 
 ### Unsafe Path Examples
 ```
-✗ /Users/David/project/src/main.py (real codebase)
+✗ /home/user/real-project/src/main.py (real codebase)
 ✗ /tmp/other-project/file.py (wrong shadow)
 ✗ /tmp/vbw-shadow/../../../etc/passwd (escape attempt)
 ✗ src/main.py (relative path - could resolve anywhere)
