@@ -24,21 +24,21 @@ Determine the correct order to validate files based on import dependencies.
     },
     {
       "layer": 1,
-      "files": ["src/services/pantry_ai.py"],
+      "files": ["src/services/user_service.py"],
       "parallel": false,
       "rationale": "Service depends on init"
     },
     {
       "layer": 2,
-      "files": ["src/routers/ai.py", "tests/test_ai.py"],
+      "files": ["src/routers/users.py", "tests/test_users.py"],
       "parallel": true,
       "rationale": "Both depend on service, independent of each other"
     }
   ],
   "dependency_graph": {
-    "src/routers/ai.py": ["src/services/pantry_ai.py"],
-    "src/services/pantry_ai.py": ["src/services/__init__.py"],
-    "tests/test_ai.py": ["src/services/pantry_ai.py"]
+    "src/routers/users.py": ["src/services/user_service.py"],
+    "src/services/user_service.py": ["src/services/__init__.py"],
+    "tests/test_users.py": ["src/services/user_service.py"]
   }
 }
 ```

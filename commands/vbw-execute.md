@@ -129,7 +129,7 @@ For each iteration, include:
 {
   "iteration": N,
   "diagnosis": "ImportError - wrong module path",
-  "fix_applied": "Changed import from src.services.ai to src.services.pantry_ai",
+  "fix_applied": "Changed import from src.services.auth to src.services.auth_service",
   "result": "PASS|FAIL"
 }
 ```

@@ -63,7 +63,7 @@ FAIL → Parse Error → Classify Type → Apply Fix Strategy → Retry
 
 Failed iterations include diagnosis tags:
 ```
-VBW: Iter 2 - [ImportError] Fixed module path src.services.pantry_ai
+VBW: Iter 2 - [ImportError] Fixed module path src.services.auth_service
 VBW: Iter 3 - [SyntaxError] Added missing colon after function def
 ```
 

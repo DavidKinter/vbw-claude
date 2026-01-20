@@ -27,10 +27,10 @@ Baseline Reference: baseline/results.md
 # DIAGNOSIS: Environment error - sqlalchemy is in pyproject.toml
 
 # BEFORE (wrong):
-python -c "from src.helpers.analytics_helpers import get_recipe_stats"
+python -c "from src.helpers.data_helpers import get_user_stats"
 
 # AFTER (correct):
-uv run python -c "from src.helpers.analytics_helpers import get_recipe_stats"
+uv run python -c "from src.helpers.data_helpers import get_user_stats"
 ```
 
 **Baseline Frequency**: 60% of tasks (3/5)
@@ -83,14 +83,14 @@ uv run pytest tests/test_analytics.py --collect-only
 
 **Example**:
 ```python
-# ERROR: ModuleNotFoundError: No module named 'src.services.ai'
-# DIAGNOSIS: Wrong filename - file is pantry_ai.py not ai.py
+# ERROR: ModuleNotFoundError: No module named 'src.services.auth'
+# DIAGNOSIS: Wrong filename - file is auth_service.py not auth.py
 
 # BEFORE (wrong):
-from src.services.ai import PantryAI
+from src.services.auth import AuthManager
 
 # AFTER (correct):
-from src.services.pantry_ai import PantryAI
+from src.services.auth_service import AuthManager
 ```
 
 ---
@@ -112,14 +112,14 @@ from src.services.pantry_ai import PantryAI
 
 **Example**:
 ```python
-# ERROR: cannot import name 'RecipeHelper' from 'src.helpers.recipe_helpers'
+# ERROR: cannot import name 'DataHelper' from 'src.helpers.data_helpers'
 # DIAGNOSIS: Typo in class name
 
 # BEFORE (wrong):
-from src.helpers.recipe_helpers import RecipeHelper
+from src.helpers.data_helpers import DataHelper
 
 # AFTER (correct):
-from src.helpers.recipe_helpers import RecipeHelpers
+from src.helpers.data_helpers import DataHelpers
 ```
 
 ---
@@ -238,12 +238,12 @@ if user.is_admin:
 # DIAGNOSIS: Missing parameter in function signature
 
 # BEFORE (wrong):
-def get_recipe_stats():
-    return db.query(Recipe).count()
+def get_user_count():
+    return db.query(User).count()
 
 # AFTER (correct):
-def get_recipe_stats(db: Session):
-    return db.query(Recipe).count()
+def get_user_count(db: Session):
+    return db.query(User).count()
 ```
 
 ---
@@ -302,12 +302,12 @@ class StatsService:
 # DIAGNOSIS: Code returns wrong count
 
 # DEBUG:
-result = get_recipe_count()
+result = get_active_count()
 print(f"DEBUG: result = {result}")  # Shows 5
 
 # FIX (if logic is wrong):
-def get_recipe_count():
-    return db.query(Recipe).filter(Recipe.active == True).count()  # Was missing filter
+def get_active_count():
+    return db.query(Item).filter(Item.active == True).count()  # Was missing filter
 ```
 
 ---
@@ -335,11 +335,11 @@ def get_recipe_count():
 # DIAGNOSIS: Fixture named 'db' in conftest.py, not 'test_db'
 
 # BEFORE (wrong):
-def test_recipe_count(test_db):
+def test_user_count(test_db):
     pass
 
 # AFTER (correct):
-def test_recipe_count(db):  # Match conftest.py fixture name
+def test_user_count(db):  # Match conftest.py fixture name
     pass
 ```
 
@@ -365,11 +365,11 @@ def test_recipe_count(db):  # Match conftest.py fixture name
 # DIAGNOSIS: Function not prefixed with test_
 
 # BEFORE (wrong):
-def check_recipe_count(db):
+def check_user_count(db):
     assert get_count(db) > 0
 
 # AFTER (correct):
-def test_recipe_count(db):
+def test_user_count(db):
     assert get_count(db) > 0
 ```
 

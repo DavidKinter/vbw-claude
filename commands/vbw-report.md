@@ -19,21 +19,21 @@ Combine validation results from multiple files into unified report.
   },
   "by_file": [
     {
-      "file": "src/services/pantry_ai.py",
+      "file": "src/services/user_service.py",
       "status": "PASS",
       "validations": [...]
     },
     {
-      "file": "tests/test_ai.py",
+      "file": "tests/test_users.py",
       "status": "FAIL",
       "validations": [...],
       "failure_reason": "Import error: module not found"
     }
   ],
   "blocking_failures": [
-    "tests/test_ai.py cannot import src.services.pantry_ai"
+    "tests/test_users.py cannot import src.services.user_service"
   ],
-  "recommendation": "Fix pantry_ai.py import path, then re-run test validation"
+  "recommendation": "Fix user_service.py import path, then re-run test validation"
 }
 ```
 
