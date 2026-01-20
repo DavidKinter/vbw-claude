@@ -35,9 +35,19 @@ fi
 mkdir -p "$SHADOW_PATH"
 
 # Rsync with common exclusions (language-agnostic)
+# SECURITY: Excludes secrets, credentials, and sensitive files
 echo "Syncing files..."
 rsync -a --delete \
     --exclude='.git' \
+    --exclude='.env' \
+    --exclude='.env.*' \
+    --exclude='*.env' \
+    --exclude='credentials*' \
+    --exclude='secrets*' \
+    --exclude='*.pem' \
+    --exclude='*.key' \
+    --exclude='*.p12' \
+    --exclude='*.pfx' \
     --exclude='node_modules' \
     --exclude='__pycache__' \
     --exclude='.venv' \

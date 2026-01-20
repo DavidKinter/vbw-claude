@@ -7,6 +7,13 @@
     "verbose_logging": true,
     "excluded_patterns": [
       ".git",
+      ".env",
+      ".env.*",
+      "*.env",
+      "credentials*",
+      "secrets*",
+      "*.pem",
+      "*.key",
       "__pycache__",
       ".venv",
       "*.pyc",

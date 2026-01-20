@@ -13,8 +13,7 @@
       "common_causes": [
         "Validation ran with system Python instead of project venv",
         "Missing uv run prefix"
-      ],
-      "baseline_frequency": "60% of tasks (3/5)"
+      ]
     },
     {
       "id": "env_missing_dev_deps",
