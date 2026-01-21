@@ -51,7 +51,11 @@ Implements a task using Validate-Before-Write protocol with full skill orchestra
 │     │ USER REVIEW  │ → Present results, get approval to copy    │
 │     └──────┬───────┘                                            │
 │            ▼                                                    │
-│  4. COMMIT PHASE                                                │
+│  4. COMMIT PHASE (BLOCKED until approval)                       │
+│     ┌──────────────┐                                            │
+│     │ ASK USER     │ → AskUserQuestion: "Copy to project?"      │
+│     └──────┬───────┘                                            │
+│            ▼ (only if approved)                                 │
 │     ┌──────────────┐                                            │
 │     │ Copy Files   │ → cp from shadow to real codebase          │
 │     └──────────────┘                                            │
@@ -123,14 +127,33 @@ Implements a task using Validate-Before-Write protocol with full skill orchestra
 - Present results with file diffs
 - WAIT for explicit user approval before copying
 
-### Phase 4: Commit
+### Phase 4: Commit (REQUIRES EXPLICIT APPROVAL)
 
-**Step 4.1: Copy Validated Files**
+**CRITICAL: MANDATORY APPROVAL GATE**
+
+Before ANY file is copied from shadow to project, you MUST:
+
+1. Use the `AskUserQuestion` tool to request explicit approval
+2. List every file that will be copied
+3. Wait for user to select "Yes, copy to project"
+4. If user declines or selects any other option, ABORT the copy entirely
+
+```
+REQUIRED: AskUserQuestion with:
+- Question: "Copy validated files from shadow to project?"
+- Options:
+  - "Yes, copy to project" (approval)
+  - "No, keep in shadow only" (reject)
+  - "Show me the diffs first" (defer)
+```
+
+**Step 4.1: Copy Validated Files (ONLY after approval)**
 ```bash
 cp /tmp/vbw-shadow/{file} {real_path}
 ```
 - Only copy files that passed validation
 - Preserve file permissions
+- NEVER execute without prior AskUserQuestion approval
 
 **Step 4.2: Cleanup (Optional)**
 ```bash
@@ -233,8 +256,11 @@ Present this after execution:
 
 ## Constraints
 
+- **NEVER copy files from shadow to project without explicit AskUserQuestion approval**
 - NEVER proceed without user approval at each gate
 - NEVER skip validation steps
 - NEVER report PASS without string match confirmation
 - ALWAYS enforce tool restrictions on subagent
 - ALWAYS enforce directory constraints on subagent
+- ALWAYS use AskUserQuestion tool before Phase 4 copy operations
+- If approval is denied, shadow files remain in /tmp/vbw-shadow/ for manual inspection
