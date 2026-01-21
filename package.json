@@ -9,7 +9,8 @@
     "bin/",
     "commands/",
     "settings/",
-    "utils/"
+    "utils/",
+    "agents/"
   ],
   "private": true,
   "repository": {
