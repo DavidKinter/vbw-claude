@@ -155,8 +155,27 @@ cp /tmp/vbw-shadow/{file} {real_path}
 - Preserve file permissions
 - NEVER execute without prior AskUserQuestion approval
 
-**Step 4.2: Cleanup (Optional)**
+**Step 4.2: Shadow Cleanup (REQUIRES EXPLICIT APPROVAL)**
+
+**CRITICAL: MANDATORY APPROVAL GATE**
+
+After the copy decision is resolved (approved or declined), you MUST:
+
+1. Use the `AskUserQuestion` tool to request explicit approval for shadow removal
+2. Wait for user to select an option
+3. Only remove shadow if user selects "Yes, remove shadow"
+4. If user declines, shadow remains at `/tmp/vbw-shadow/` for manual inspection
+
+```
+REQUIRED: AskUserQuestion with:
+- Question: "Remove shadow directory (/tmp/vbw-shadow)?"
+- Options:
+  - "Yes, remove shadow" (cleanup)
+  - "No, keep shadow for inspection" (preserve)
+```
+
 ```bash
+# Only execute if user approved removal:
 rm -rf /tmp/vbw-shadow
 ```
 
