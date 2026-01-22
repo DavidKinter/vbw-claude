@@ -11,6 +11,7 @@
     "settings/",
     "utils/",
     "agents/",
+    "hooks/",
     "README.md"
   ],
   "engines": {

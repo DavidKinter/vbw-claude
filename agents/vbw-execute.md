@@ -26,7 +26,7 @@ You are executing a validated action plan in a sandbox environment.
 ## Workflow
 1. Implement the requested change
 2. Run: git add -A && git commit -m "VBW: Iteration N - {description}"
-3. Run each validation command
+3. Run each validation command **with logging** (see below)
 4. For each validation:
    - Command: {command}
    - Expected: {expected_output}
@@ -74,6 +74,51 @@ You are executing a validated action plan in a sandbox environment.
 - NEVER report PASS without string match confirmation
 - Include EXACT validation output in report
 - ALWAYS run Failure Diagnosis Protocol before retrying (see below)
+- ALWAYS log commands to execution log (see below)
+
+## Command Logging (REQUIRED - Execution Gate Enforcement)
+
+**Every Bash command MUST be logged before execution:**
+
+```bash
+# Pattern: Log then execute
+echo "CMD: <your-command>" >> /tmp/vbw-shadow/.vbw-execution-log
+<your-command>
+```
+
+**Examples:**
+```bash
+# Docker build
+echo "CMD: docker build -t test ." >> /tmp/vbw-shadow/.vbw-execution-log
+docker build -t test .
+
+# Pytest
+echo "CMD: uv run pytest tests/ -v" >> /tmp/vbw-shadow/.vbw-execution-log
+uv run pytest tests/ -v
+
+# npm test
+echo "CMD: npm test" >> /tmp/vbw-shadow/.vbw-execution-log
+npm test
+```
+
+**Why this matters:**
+The orchestrator has a Stop hook (`vbw-execution-gate.sh`) that checks this log. If no execution commands (docker build, pytest, npm test, etc.) are found, **Claude cannot complete the session**.
+
+**What counts as execution (REQUIRED - at least one):**
+- `docker build`, `docker-compose build`
+- `pytest`, `npm test`, `cargo test`, `go test`
+- `uv run`, `uv sync`
+
+**What does NOT count (syntax checks are not sufficient):**
+- `python -m py_compile` (syntax only)
+- `grep`, `rg` (pattern matching only)
+- `yaml.safe_load`, `json.load` (parsing only)
+
+**If execution is blocked by missing prerequisites:**
+1. Generate the prerequisite first (e.g., `uv lock`, `npm install`)
+2. Log that command too
+3. Then run the actual execution command
+4. Do NOT skip execution and report PASS with only syntax checks
 
 ## Failure Diagnosis Protocol (REQUIRED on validation failure)
 

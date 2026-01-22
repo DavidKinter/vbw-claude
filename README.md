@@ -89,31 +89,63 @@ Write Code → Build It → Run Tests → Fix Errors → Repeat Until It Works
 ## Install
 
 ```bash
-# From GitHub
+# Recommended: Install with native enforcement hooks
+npx github:DavidKinter/vbw-claude --local --with-hooks
+
+# Or without hooks (commands only)
 npx github:DavidKinter/vbw-claude --local
 
-# Or clone and run directly
+# Clone and run directly
 git clone git@github.com:DavidKinter/vbw-claude.git
-node vbw-claude/bin/install.js --local
+node vbw-claude/bin/install.js --local --with-hooks
 ```
 
 | Flag | Description |
 |------|-------------|
 | `--local` | Install to current project's `.claude/` (default) |
 | `--global` | Install to `~/.claude/` for all projects |
+| `--with-hooks` | Install native enforcement hooks **(recommended)** |
+| `--help` | Show installation options |
+
+### What Gets Installed
+
+| Directory | Contents | With `--with-hooks` |
+|-----------|----------|---------------------|
+| `.claude/commands/` | VBW slash commands | ✅ |
+| `.claude/agents/` | vbw-execute subagent | ✅ |
+| `.claude/settings/` | Language error patterns | ✅ |
+| `.claude/utils/` | Shell utilities | ✅ |
+| `.claude/hooks/` | Native enforcement hooks | Only with flag |
+| `.claude/settings.json` | Hook configuration | Only with flag |
 
 ### Verify Installation
 
 ```bash
-# Check commands installed (expect 6 files)
+# Check commands installed
 ls .claude/commands/vbw-*.md
 
 # Check subagent installed
 ls .claude/agents/vbw-execute.md
 
-# Check settings installed (expect 12 files: 11 language patterns + 1 config)
-ls .claude/settings/vbw*.json
+# Check hooks installed (if --with-hooks was used)
+ls .claude/hooks/vbw-*.sh
+cat .claude/settings.json | grep -A5 '"hooks"'
 ```
+
+## VBW Promises
+
+VBW makes two guarantees, enforced by native Claude Code hooks:
+
+| Promise | Hook | What It Does |
+|---------|------|--------------|
+| **Always run code** | `vbw-execution-gate.sh` (Stop) | Claude cannot finish a VBW session until actual execution (docker build, pytest, etc.) has occurred. Syntax checks alone are not sufficient. |
+| **Never copy without approval** | `vbw-copy-gate.sh` (PreToolUse) | Claude cannot copy files from shadow to project without explicit user approval via AskUserQuestion. |
+
+These hooks provide **native enforcement**—Claude cannot bypass them, even if prompted to do so.
+
+### Without Hooks
+
+If you install without `--with-hooks`, VBW still works but relies on prompt-based instructions. Claude *should* follow them, but there's no native enforcement preventing bypass.
 
 ## Quick Start
 
@@ -329,6 +361,38 @@ PATH VIOLATION: /real/project/path is outside shadow directory
 **Subagent seems to lose context**
 → Subagent has its own context window (by design)
 → All necessary info must be in the task prompt passed to it
+
+### Hook Issues
+
+**"VBW Execution Gate FAILED: No build/test commands detected"**
+```
+VBW requires at least one of:
+  - docker build
+  - pytest / npm test / cargo test / go test
+  - uv run <command>
+```
+→ This is correct behavior—VBW requires actual code execution
+→ Syntax checks (`python -m py_compile`) are not sufficient
+→ Ensure your task includes running tests or building
+
+**"VBW Copy Gate BLOCKED: Attempting to copy from shadow to project"**
+```
+You must use AskUserQuestion to get explicit user approval
+```
+→ This is correct behavior—files can't be copied without your approval
+→ Claude must ask you first via AskUserQuestion
+→ If you see this, Claude tried to skip the approval step
+
+**Hooks not firing**
+→ Verify hooks are installed: `ls .claude/hooks/vbw-*.sh`
+→ Verify settings.json has hook config: `cat .claude/settings.json`
+→ Check hooks are executable: `ls -la .claude/hooks/`
+→ Re-run installer: `npx github:DavidKinter/vbw-claude --local --with-hooks`
+
+**Hooks blocking normal (non-VBW) operations**
+→ Hooks only activate when `/tmp/vbw-shadow/.vbw-gate-required` exists
+→ This marker is created by `/vbw-implement` and removed on cleanup
+→ If stuck, manually remove: `rm /tmp/vbw-shadow/.vbw-gate-required`
 
 ## Results
 

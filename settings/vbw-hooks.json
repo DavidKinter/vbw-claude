@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "VBW Hook Configuration - Merge into .claude/settings.json",
+  "version": "1.1.0",
+
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/vbw-execution-gate.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/vbw-copy-gate.sh"
+          }
+        ]
+      }
+    ]
+  },
+
+  "installation_notes": {
+    "step1": "Copy hooks/*.sh to .claude/hooks/",
+    "step2": "Merge hooks config into .claude/settings.json",
+    "step3": "Both hooks activate when /tmp/vbw-shadow/.vbw-gate-required exists",
+    "step4": "vbw-implement creates this marker when starting a VBW session"
+  },
+
+  "hook_descriptions": {
+    "vbw-execution-gate.sh": {
+      "event": "Stop",
+      "purpose": "Blocks Claude from finishing until actual execution (docker build, pytest, etc.) has occurred",
+      "promise": "VBW Promise #1: Always run code before reporting success"
+    },
+    "vbw-copy-gate.sh": {
+      "event": "PreToolUse (Bash)",
+      "purpose": "Blocks copy operations from shadow to project without explicit user approval",
+      "promise": "VBW Promise #2: Never copy from sandbox without explicit approval"
+    }
+  }
+}

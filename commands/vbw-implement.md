@@ -88,9 +88,36 @@ Implements a task using Validate-Before-Write protocol with full skill orchestra
 - Incorporate feedback
 - Output: Improved validation set
 
-**Step 1.5: User Approval**
+**Step 1.5: Worst-Case Estimation**
+
+For each validation command, estimate resource impact using these heuristics:
+
+| Command Type | Disk Estimate | Time Estimate | Network? |
+|--------------|---------------|---------------|----------|
+| `uv lock/sync` | ~50-200MB | 30s-2min | Yes |
+| `npm install` | ~100MB-2GB | 30s-5min | Yes |
+| `docker build` | ~100MB-2GB | 1-10min | Usually |
+| `pytest/test` | Minimal | Varies by count | No |
+| `cargo build` | ~500MB-2GB | 1-10min | Yes (first) |
+
+Adjust based on project context:
+- Read `package.json` to gauge dependency count
+- Read `Dockerfile` to identify base image size
+- Count test files for test duration estimate
+
+Express as ranges with explanatory notes:
+- "~300MB (node_modules, 47 dependencies)"
+- "~3 min (docker build, python:3.11 base)"
+
+Reversibility check:
+- Shadow-only operations → Reversible
+- External writes (push, deploy, DB) → Not reversible (should not be in validation anyway)
+
+Output: Completed "Expected Worst Case" table for action plan
+
+**Step 1.6: User Approval**
 - Present complete action plan to user
-- Format as table with files, validations, expected outputs
+- Format as table with files, validations, expected outputs, worst case
 - WAIT for explicit user approval before proceeding
 
 ### Phase 2: Execution (Shadow Context)
@@ -103,14 +130,54 @@ Implements a task using Validate-Before-Write protocol with full skill orchestra
 - Initializes fresh git repo
 - Confirms initial commit
 
-**Step 2.2: Spawn Execution Subagent**
+**Step 2.2: Enable Execution Gate**
+```bash
+touch /tmp/vbw-shadow/.vbw-gate-required
+> /tmp/vbw-shadow/.vbw-execution-log
+```
+- Creates gate marker (activates Stop hook enforcement)
+- Initializes empty execution log
+- From this point, Claude CANNOT complete until execution is verified
+
+**Step 2.3: Spawn Execution Subagent**
 - Use Task tool with vbw-execute prompt
 - Include:
   - Task description
   - Files to modify (in dependency order)
   - Validation commands with expected outputs
   - Tool restrictions (see below)
+  - **Command logging requirement** (see below)
 - WAIT for subagent to return result
+
+**CRITICAL: Command Logging Requirement**
+
+The subagent MUST log every Bash command to the execution log:
+
+```bash
+# Before EVERY Bash command, log it:
+echo "CMD: <command>" >> /tmp/vbw-shadow/.vbw-execution-log
+
+# Then run the command
+<command>
+```
+
+Example:
+```bash
+echo "CMD: docker build -t test ." >> /tmp/vbw-shadow/.vbw-execution-log
+docker build -t test .
+```
+
+This log is verified by the execution gate. If no execution commands (docker build, pytest, npm test, etc.) appear in the log, the gate will BLOCK completion.
+
+**What counts as execution:**
+- `docker build`, `docker-compose build`
+- `pytest`, `npm test`, `cargo test`, `go test`
+- `uv run`, `uv sync`
+
+**What does NOT count (syntax only):**
+- `python -m py_compile`
+- `grep`, `rg`, pattern matching
+- `yaml.safe_load`, `json.load`
 
 ### Phase 3: Review (Main Context)
 
@@ -129,7 +196,7 @@ Implements a task using Validate-Before-Write protocol with full skill orchestra
 
 ### Phase 4: Commit (REQUIRES EXPLICIT APPROVAL)
 
-**CRITICAL: MANDATORY APPROVAL GATE**
+**CRITICAL: MANDATORY APPROVAL GATE (Hook-Enforced)**
 
 Before ANY file is copied from shadow to project, you MUST:
 
@@ -137,6 +204,7 @@ Before ANY file is copied from shadow to project, you MUST:
 2. List every file that will be copied
 3. Wait for user to select "Yes, copy to project"
 4. If user declines or selects any other option, ABORT the copy entirely
+5. **Only after approval**: Create the approval marker (see below)
 
 ```
 REQUIRED: AskUserQuestion with:
@@ -147,13 +215,27 @@ REQUIRED: AskUserQuestion with:
   - "Show me the diffs first" (defer)
 ```
 
-**Step 4.1: Copy Validated Files (ONLY after approval)**
+**Step 4.0: Create Approval Marker (ONLY after user selects "Yes")**
+
+The PreToolUse hook (`vbw-copy-gate.sh`) blocks all copy operations from shadow to project. The marker unlocks this gate.
+
+```bash
+# ONLY execute this if user selected "Yes, copy to project":
+touch /tmp/vbw-shadow/.vbw-copy-approved
+```
+
+**IMPORTANT**:
+- Do NOT create this marker before AskUserQuestion
+- Do NOT create this marker if user declines
+- The hook will BLOCK any copy attempt without this marker
+
+**Step 4.1: Copy Validated Files (ONLY after approval + marker)**
 ```bash
 cp /tmp/vbw-shadow/{file} {real_path}
 ```
 - Only copy files that passed validation
 - Preserve file permissions
-- NEVER execute without prior AskUserQuestion approval
+- Copy will be BLOCKED by hook if marker is missing
 
 **Step 4.2: Shadow Cleanup (REQUIRES EXPLICIT APPROVAL)**
 
@@ -178,6 +260,11 @@ REQUIRED: AskUserQuestion with:
 # Only execute if user approved removal:
 rm -rf /tmp/vbw-shadow
 ```
+
+**Note:** Removing the shadow directory also removes:
+- `.vbw-gate-required` - deactivates execution gate for future sessions
+- `.vbw-copy-approved` - clears copy approval for future sessions
+- `.vbw-execution-log` - clears execution log
 
 ## Tool Restrictions for Execution Subagent
 
@@ -238,6 +325,14 @@ Present this to user for approval:
 |---|------|---------|-----------------|
 | 1 | Platform | `{command}` | "{expected}" |
 | 2 | Security | `{command}` | "{expected}" |
+
+### Expected Worst Case
+| Resource | Estimate | Notes |
+|----------|----------|-------|
+| Disk | ~{X}MB | {packages, docker layers, etc.} |
+| Time | ~{X} min | {build, test, validation duration} |
+| Network | Yes/No | {dependency fetches, docker pulls} |
+| Reversible | Yes/No | {shadow-only, or modifies external state} |
 
 ### Challenges Addressed
 - {challenge from vbw-advocate}
