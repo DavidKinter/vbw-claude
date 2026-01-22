@@ -1,4 +1,9 @@
-# VBW Claude
+# vbw-claude
+
+> ⚠️ **WARNING: This project is highly experimental and under active development. Expect breaking changes, bugs, and incomplete features. Not recommended for production use.**
+
+![Status](https://img.shields.io/badge/status-experimental-orange)
+![Stability](https://img.shields.io/badge/stability-unstable-red)
 
 Validate-Before-Write framework for Claude Code. Builds, runs, and validates code in a sandbox—iterating until it works—before touching your real project.
 
