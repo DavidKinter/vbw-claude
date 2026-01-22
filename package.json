@@ -1,6 +1,6 @@
 {
   "name": "vbw-claude",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "Validate-Before-Write framework for Claude Code",
   "bin": {
     "vbw-claude": "bin/install.js"
@@ -10,9 +10,12 @@
     "commands/",
     "settings/",
     "utils/",
-    "agents/"
+    "agents/",
+    "README.md"
   ],
-  "private": true,
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/DavidKinter/vbw-claude.git"
@@ -21,7 +24,8 @@
     "claude",
     "claude-code",
     "validation",
-    "sandbox"
+    "sandbox",
+    "ai-coding"
   ],
   "author": "David Kinter",
   "license": "MIT"

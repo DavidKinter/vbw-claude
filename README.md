@@ -1,11 +1,90 @@
 # VBW Claude
 
-Validate-Before-Write framework for Claude Code. Executes code changes in a sandbox, validates, then copies to real project.
+Validate-Before-Write framework for Claude Code. Builds, runs, and validates code in a sandbox—iterating until it works—before touching your real project.
+
+## Why VBW?
+
+### The Problem
+
+Claude Code writes code—but often doesn't verify it actually works:
+
+- Writes a Dockerfile but doesn't run `docker build`
+- Adds imports but doesn't check if the module exists
+- Creates tests but doesn't run `pytest`
+- Generates code with syntax errors that only surface later
+
+You end up debugging what Claude wrote.
+
+### The Solution
+
+VBW enforces **validation before commit**:
+
+```
+Write Code → Build It → Run Tests → Fix Errors → Repeat Until It Works
+                                         ↑
+                            (up to 5 automated iterations)
+```
+
+| Gap in Native Claude Code | VBW Solution |
+|---------------------------|--------------|
+| Writes Dockerfile, doesn't build | Runs `docker build`, iterates on errors |
+| Adds imports, doesn't verify | Catches `ModuleNotFoundError`, fixes paths |
+| Creates tests, doesn't run | Runs `pytest`, fixes assertion failures |
+| Syntax errors go unnoticed | Compiler/interpreter catches them first |
+| Dependency issues surface later | Diagnosed and resolved automatically |
+
+**Result**: Code that lands in your project has been **built, run, and validated**—not just written.
+
+### How It Stays Safe
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         VBW WORKFLOW                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   Your Project                                                  │
+│        │                                                        │
+│        ▼ (rsync, secrets excluded)                              │
+│   ┌─────────────┐                                               │
+│   │   Shadow    │  ← All changes happen here first              │
+│   │   /tmp/vbw- │                                               │
+│   │   shadow/   │                                               │
+│   └──────┬──────┘                                               │
+│          │                                                      │
+│          ▼                                                      │
+│   ┌─────────────┐     ┌─────────────┐                           │
+│   │  Implement  │────▶│  Validate   │──── PASS ───▶ User Review │
+│   └─────────────┘     └──────┬──────┘                    │      │
+│          ▲                   │                           ▼      │
+│          │              FAIL │                    ┌───────────┐ │
+│          │                   │                    │  Approve? │ │
+│   ┌──────┴──────┐            │                    └─────┬─────┘ │
+│   │  Diagnose   │◀───────────┘                          │       │
+│   │  & Fix      │                                       ▼       │
+│   └─────────────┘                             Your Project      │
+│   (up to 5 iterations)                          Updated         │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key Benefits**:
+- ✅ **Actually runs your code** - Builds images, runs tests, compiles. Catches errors before they reach you.
+- ✅ **Automatic retry** - Diagnoses failures and fixes them (up to 5 iterations)
+- ✅ **Your project stays clean** - All iteration happens in shadow; only validated code is copied
+- ✅ **Context isolation** - Execution runs in a subagent; error traces don't pollute your conversation
+- ✅ **Secrets protected** - `.env`, `*.pem`, `*.key`, credentials never copied to shadow
+- ✅ **Explicit approval** - You approve before anything touches your real codebase
+
+## Prerequisites
+
+- [Claude Code](https://claude.ai/code) CLI installed
+- Project using a supported language (see [Supported Languages](#supported-languages))
+- Node.js 16+ (for installer)
 
 ## Install
 
 ```bash
-# From GitHub (private repo)
+# From GitHub
 npx github:DavidKinter/vbw-claude --local
 
 # Or clone and run directly
@@ -13,88 +92,254 @@ git clone git@github.com:DavidKinter/vbw-claude.git
 node vbw-claude/bin/install.js --local
 ```
 
-## Flags
+| Flag | Description |
+|------|-------------|
+| `--local` | Install to current project's `.claude/` (default) |
+| `--global` | Install to `~/.claude/` for all projects |
 
-- `--local` - Install to current project's `.claude/commands/` (default)
-- `--global` - Install to `~/.claude/commands/`
+### Verify Installation
+
+```bash
+# Check commands installed (expect 6 files)
+ls .claude/commands/vbw-*.md
+
+# Check subagent installed
+ls .claude/agents/vbw-execute.md
+
+# Check settings installed (expect 12 files: 11 language patterns + 1 config)
+ls .claude/settings/vbw*.json
+```
+
+## Quick Start
+
+```
+/vbw-implement Add input validation to the user registration endpoint
+```
+
+VBW will:
+1. **Plan** - Analyze task, identify files, assign reviewer roles, generate validations
+2. **Ask** - Present action plan for your approval
+3. **Execute** - Build/run/test in shadow with automatic retry on failures
+4. **Report** - Show results and request approval before copying
+5. **Commit** - Copy validated files to your project (only after you approve)
+
+### Example Session
+
+```
+You: /vbw-implement Add rate limiting to POST /api/login
+
+Claude: ## VBW Action Plan: Add rate limiting to login endpoint
+
+### Files to Modify
+| Layer | File | Action |
+|-------|------|--------|
+| 0 | src/middleware/rate_limit.py | create |
+| 1 | src/routers/auth.py | modify |
+| 2 | tests/test_auth.py | modify |
+
+### Validation Commands
+| Role | Command | Expected |
+|------|---------|----------|
+| Security | `bandit -r src/` | No high-severity issues |
+| Backend | `uv run python -c "from src.middleware.rate_limit import ..."` | No ImportError |
+| QA | `uv run pytest tests/test_auth.py -v` | All tests pass |
+
+Approve this action plan? [Yes / No / Modify]
+```
 
 ## Commands
 
-After install, these slash commands are available in Claude Code:
+| Command | You Run It? | Description |
+|---------|-------------|-------------|
+| `/vbw-implement` | ✅ **Yes** | Main entry point—orchestrates full workflow |
+| `/vbw-team` | ⚪ Optional | Generate reviewer roles for a task |
+| `/vbw-validate` | ⚪ Optional | Generate validation commands per role |
+| `/vbw-advocate` | ⚪ Optional | Devil's advocate—challenge proposed validations |
+| `/vbw-deps` | ⚪ Optional | Analyze file dependency order |
+| `/vbw-report` | ⚪ Optional | Aggregate validation results |
 
-| Command | Description |
-|---------|-------------|
-| `/vbw-implement` | Generate action plan for task |
-| `/vbw-execute` | Run in sandbox with validation |
-| `/vbw-team` | Multi-role validation perspectives |
-| `/vbw-validate` | Generate validation commands |
-| `/vbw-advocate` | Devil's advocate review |
-| `/vbw-deps` | Dependency order resolution |
-| `/vbw-report` | Aggregate validation report |
+> **Note**: `vbw-execute` is a **subagent**, not a slash command. It runs automatically in the shadow environment when `/vbw-implement` spawns it via the Task tool.
+
+### Why a Subagent?
+
+The `vbw-execute` subagent runs in its own context window:
+
+| Main Conversation | Subagent (vbw-execute) |
+|-------------------|------------------------|
+| Planning, approval gates | Implementation, validation, retries |
+| Sees final JSON report only | Sees all errors, iterations, diagnostics |
+| Stays clean for follow-up work | Can generate 50KB+ of output safely |
+
+This isolation prevents failed iterations and error traces from consuming your main context.
 
 ## Supported Languages
 
 | Language | Detection Files | Error Patterns |
 |----------|-----------------|----------------|
-| Python | `pyproject.toml`, `*.py` | 10 patterns |
-| TypeScript | `tsconfig.json`, `*.ts` | 12 patterns |
-| Go | `go.mod`, `*.go` | 12 patterns |
-| Java | `pom.xml`, `*.java` | 10 patterns |
-| C# | `*.csproj`, `*.cs` | 10 patterns |
-| Ruby | `Gemfile`, `*.rb` | 10 patterns |
-| PHP | `composer.json`, `*.php` | 10 patterns |
-| Rust | `Cargo.toml`, `*.rs` | 10 patterns |
-| Swift | `Package.swift`, `*.swift` | 10 patterns |
-| Kotlin | `*.kt`, `build.gradle.kts` | 10 patterns |
-| C/C++ | `CMakeLists.txt`, `*.cpp` | 11 patterns |
+| Python | `pyproject.toml`, `*.py` | ~10 patterns |
+| TypeScript | `tsconfig.json`, `*.ts` | ~12 patterns |
+| Go | `go.mod`, `*.go` | ~12 patterns |
+| Java | `pom.xml`, `*.java` | ~10 patterns |
+| C# | `*.csproj`, `*.cs` | ~10 patterns |
+| Ruby | `Gemfile`, `*.rb` | ~10 patterns |
+| PHP | `composer.json`, `*.php` | ~10 patterns |
+| Rust | `Cargo.toml`, `*.rs` | ~10 patterns |
+| Swift | `Package.swift`, `*.swift` | ~10 patterns |
+| Kotlin | `*.kt`, `build.gradle.kts` | ~10 patterns |
+| C/C++ | `CMakeLists.txt`, `*.cpp` | ~11 patterns |
 
-**Total: 11 languages, 115 error patterns**
+**Total: 11 languages, 100+ error patterns**
 
 ## How It Works
 
-1. rsync project to `/tmp/vbw-shadow/` (secrets excluded)
-2. Make changes in shadow
-3. Run validations (syntax, imports, tests)
-4. If validation fails → **Diagnose → Fix → Retry** (up to 5 iterations)
-5. If all pass, copy back to real project
+### Phase 1: Planning (Main Context)
 
-## Targeted Reflection (v1.1.0)
+1. **Dependency Analysis** - Which files need to exist before others?
+2. **Team Assignment** - Which roles should review? (Security, Backend, SRE, etc.)
+3. **Validation Generation** - What commands prove it works?
+4. **Devil's Advocate** - Are the validations complete?
+5. **→ User approves action plan**
 
-When validation fails, the execution subagent now performs structured diagnosis:
+### Phase 2: Execution (Shadow Context)
+
+1. **Shadow Sync** - `rsync` project to `/tmp/vbw-shadow/` (secrets excluded)
+2. **Git Init** - Fresh repo in shadow for iteration tracking
+3. **Implement** - Make the requested changes
+4. **Validate** - Run all validation commands
+5. **On Failure** - Diagnose → classify → fix → retry (max 5 iterations)
+6. **→ User reviews results**
+
+### Phase 3: Commit (Requires Explicit Approval)
+
+1. **→ User approves copy** via AskUserQuestion prompt
+2. **Copy** - Validated files from shadow to project
+3. **→ User approves cleanup** of shadow directory
+
+## Targeted Reflection
+
+When validation fails, the subagent performs structured diagnosis:
 
 ```
-FAIL → Parse Error → Classify Type → Apply Fix Strategy → Retry
+FAIL → Parse Error → Classify Type → Lookup Fix Strategy → Apply → Retry
 ```
 
-### Error Categories (All Languages)
+### Error Categories
 
 | Category | Examples | Fix Approach |
 |----------|----------|--------------|
-| Environment | Missing deps, wrong runtime | Install deps, use correct runtime |
-| Import/Module | Cannot find module, undefined | Fix import path, install package |
-| Syntax | Invalid syntax, unexpected token | Fix code syntax |
+| Environment | Module in deps but not found | Use `uv run` / `npm install` |
+| Import | Cannot find module, wrong path | Fix import path, check `__init__.py` |
+| Syntax | IndentationError, missing colon | Fix code syntax |
 | Type | Type mismatch, wrong arguments | Fix types, match signatures |
-| Test | Assertion failed, fixture missing | Fix test logic or setup |
-| Build | Dockerfile error, compile error | Fix build configuration |
-
-See `settings/vbw-error-patterns-{language}.json` for language-specific patterns.
+| Test | Assertion failed, fixture missing | Fix test logic or add fixture |
+| Build | Dockerfile error, compile failure | Fix build configuration |
 
 ### Diagnosis in Commit Messages
 
-Failed iterations include diagnosis tags:
+Each retry iteration records what was diagnosed and fixed:
+
 ```
+VBW: Iter 1 - Initial implementation
 VBW: Iter 2 - [ImportError] Fixed module path src.services.auth_service
 VBW: Iter 3 - [SyntaxError] Added missing colon after function def
+VBW: Iter 4 - [AssertionError] Fixed expected value in test
 ```
 
-### Results
+## Configuration
 
-- **28.6% iteration reduction** (1.4 → 1.0 mean iterations)
-- **100% diagnosis accuracy** across tested error types
-- **Zero validation bypasses** (safety maintained)
+Edit `.claude/settings/vbw.json` after install:
 
-See `docs/26-01-20_vbw-targeted-reflection-playbook.md` for implementation details.
+```json
+{
+  "vbw": {
+    "shadow_path": "/tmp/vbw-shadow",
+    "max_iterations": 5,
+    "parallel_execution": false,
+    "auto_cleanup": true,
+    "verbose_logging": true,
+    "excluded_patterns": [
+      ".git", ".env", ".env.*", "*.env",
+      "credentials*", "secrets*",
+      "*.pem", "*.key", "*.p12", "*.pfx",
+      "__pycache__", ".venv", "node_modules",
+      ".pytest_cache", ".mypy_cache",
+      "dist", "build", "target", "vendor"
+    ]
+  }
+}
+```
 
-## Config
+| Option | Default | Description |
+|--------|---------|-------------|
+| `shadow_path` | `/tmp/vbw-shadow` | Where shadow copy is created |
+| `max_iterations` | `5` | Max retry attempts before failing |
+| `parallel_execution` | `false` | Reserved for future parallel validation |
+| `auto_cleanup` | `true` | Prompt to remove shadow after completion |
+| `verbose_logging` | `true` | Enable detailed execution logging |
+| `excluded_patterns` | (see above) | Files/dirs never copied to shadow |
 
-Edit `.claude/settings/vbw.json` after install.
+## Troubleshooting
+
+### Installation Issues
+
+**Command not recognized after install**
+```
+Unknown command: /vbw-implement
+```
+→ Verify files exist: `ls .claude/commands/vbw-implement.md`
+→ Restart Claude Code session
+
+### Shadow Sync Issues
+
+**Source directory does not exist**
+```
+ERROR: Source directory does not exist: /path/to/project
+```
+→ Run `/vbw-implement` from your project root, not a subdirectory
+
+### Validation Issues
+
+**ModuleNotFoundError during validation**
+```
+ModuleNotFoundError: No module named 'mypackage'
+```
+→ VBW uses `uv run` for Python. Ensure deps are in `pyproject.toml`
+→ Run `uv sync` in your project first
+
+**Tests pass locally but fail in shadow**
+→ Shadow excludes `.venv`. Run `uv sync` or `npm install` in shadow
+→ Check if test relies on files in `excluded_patterns`
+
+### Safety Violations
+
+**PATH VIOLATION error**
+```
+PATH VIOLATION: /real/project/path is outside shadow directory
+```
+→ This is correct behavior—subagent refused unsafe operation
+→ Check if your task description uses absolute paths
+
+### Context Issues
+
+**Subagent seems to lose context**
+→ Subagent has its own context window (by design)
+→ All necessary info must be in the task prompt passed to it
+
+## Results
+
+Tested on Python/Docker project (5 tasks):
+
+| Metric | Baseline | With VBW | Improvement |
+|--------|----------|----------|-------------|
+| Mean iterations to pass | 1.4 | 1.0 | 28.6% fewer |
+| Code validated before commit | Sometimes | Always | ✓ |
+| Diagnosis accuracy | — | 100% | ✓ |
+| Validation bypasses | — | 0 | ✓ |
+
+## License
+
+MIT
+
+---
+
+*VBW Claude: Because code should work before it lands in your project.*
