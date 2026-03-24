@@ -30,7 +30,7 @@ GATE_MARKER="$SANDBOX/.vbw-gate-required"
 # If not in VBW context, allow stop (don't interfere with normal Claude usage)
 # -----------------------------------------------------------------------------
 if [ ! -f "$GATE_MARKER" ]; then
-    echo '{"decision": "allow"}'
+    echo '{"decision": "approve"}'
     exit 0
 fi
 
@@ -95,7 +95,7 @@ fi
 # Execution commands found - ALLOW
 cat << EOF
 {
-  "decision": "allow",
+  "decision": "approve",
   "reason": "VBW Execution Gate PASSED: $EXEC_COUNT execution command(s) detected."
 }
 EOF
