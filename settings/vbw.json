@@ -1,6 +1,6 @@
 {
   "vbw": {
-    "shadow_path": "/tmp/vbw-shadow",
+    "sandbox_path": "/tmp/vbw-sandbox",
     "max_iterations": 5,
     "parallel_execution": false,
     "auto_cleanup": true,

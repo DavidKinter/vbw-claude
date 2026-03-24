@@ -51,9 +51,9 @@ Write Code → Build It → Run Tests → Fix Errors → Repeat Until It Works
 │        │                                                        │
 │        ▼ (rsync, secrets excluded)                              │
 │   ┌─────────────┐                                               │
-│   │   Shadow    │  ← All changes happen here first              │
+│   │   Sandbox   │  ← All changes happen here first              │
 │   │   /tmp/vbw- │                                               │
-│   │   shadow/   │                                               │
+│   │   sandbox/  │                                               │
 │   └──────┬──────┘                                               │
 │          │                                                      │
 │          ▼                                                      │
@@ -75,9 +75,9 @@ Write Code → Build It → Run Tests → Fix Errors → Repeat Until It Works
 **Key Benefits**:
 - ✅ **Actually runs your code** - Builds images, runs tests, compiles. Catches errors before they reach you.
 - ✅ **Automatic retry** - Diagnoses failures and fixes them (up to 5 iterations)
-- ✅ **Your project stays clean** - All iteration happens in shadow; only validated code is copied
+- ✅ **Your project stays clean** - All iteration happens in sandbox; only validated code is copied
 - ✅ **Context isolation** - Execution runs in a subagent; error traces don't pollute your conversation
-- ✅ **Secrets protected** - `.env`, `*.pem`, `*.key`, credentials never copied to shadow
+- ✅ **Secrets protected** - `.env`, `*.pem`, `*.key`, credentials never copied to sandbox
 - ✅ **Explicit approval** - You approve before anything touches your real codebase
 
 ## Prerequisites
@@ -139,7 +139,7 @@ VBW makes two guarantees, enforced by native Claude Code hooks:
 | Promise | Hook | What It Does |
 |---------|------|--------------|
 | **Always run code** | `vbw-execution-gate.sh` (Stop) | Claude cannot finish a VBW session until actual execution (docker build, pytest, etc.) has occurred. Syntax checks alone are not sufficient. |
-| **Never copy without approval** | `vbw-copy-gate.sh` (PreToolUse) | Claude cannot copy files from shadow to project without explicit user approval via AskUserQuestion. |
+| **Never copy without approval** | `vbw-copy-gate.sh` (PreToolUse) | Claude cannot copy files from sandbox to project without explicit user approval via AskUserQuestion. |
 
 These hooks provide **native enforcement**—Claude cannot bypass them, even if prompted to do so.
 
@@ -156,7 +156,7 @@ If you install without `--with-hooks`, VBW still works but relies on prompt-base
 VBW will:
 1. **Plan** - Analyze task, identify files, assign reviewer roles, generate validations
 2. **Ask** - Present action plan for your approval
-3. **Execute** - Build/run/test in shadow with automatic retry on failures
+3. **Execute** - Build/run/test in sandbox with automatic retry on failures
 4. **Report** - Show results and request approval before copying
 5. **Commit** - Copy validated files to your project (only after you approve)
 
@@ -195,7 +195,7 @@ Approve this action plan? [Yes / No / Modify]
 | `/vbw-deps` | ⚪ Optional | Analyze file dependency order |
 | `/vbw-report` | ⚪ Optional | Aggregate validation results |
 
-> **Note**: `vbw-execute` is a **subagent**, not a slash command. It runs automatically in the shadow environment when `/vbw-implement` spawns it via the Task tool.
+> **Note**: `vbw-execute` is a **subagent**, not a slash command. It runs automatically in the sandbox environment when `/vbw-implement` spawns it via the Task tool.
 
 ### Why a Subagent?
 
@@ -237,10 +237,10 @@ This isolation prevents failed iterations and error traces from consuming your m
 4. **Devil's Advocate** - Are the validations complete?
 5. **→ User approves action plan**
 
-### Phase 2: Execution (Shadow Context)
+### Phase 2: Execution (Sandbox Context)
 
-1. **Shadow Sync** - `rsync` project to `/tmp/vbw-shadow/` (secrets excluded)
-2. **Git Init** - Fresh repo in shadow for iteration tracking
+1. **Sandbox Sync** - `rsync` project to `/tmp/vbw-sandbox/` (secrets excluded)
+2. **Git Init** - Fresh repo in sandbox for iteration tracking
 3. **Implement** - Make the requested changes
 4. **Validate** - Run all validation commands
 5. **On Failure** - Diagnose → classify → fix → retry (max 5 iterations)
@@ -249,8 +249,8 @@ This isolation prevents failed iterations and error traces from consuming your m
 ### Phase 3: Commit (Requires Explicit Approval)
 
 1. **→ User approves copy** via AskUserQuestion prompt
-2. **Copy** - Validated files from shadow to project
-3. **→ User approves cleanup** of shadow directory
+2. **Copy** - Validated files from sandbox to project
+3. **→ User approves cleanup** of sandbox directory
 
 ## Targeted Reflection
 
@@ -289,7 +289,7 @@ Edit `.claude/settings/vbw.json` after install:
 ```json
 {
   "vbw": {
-    "shadow_path": "/tmp/vbw-shadow",
+    "sandbox_path": "/tmp/vbw-sandbox",
     "max_iterations": 5,
     "parallel_execution": false,
     "auto_cleanup": true,
@@ -308,12 +308,12 @@ Edit `.claude/settings/vbw.json` after install:
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `shadow_path` | `/tmp/vbw-shadow` | Where shadow copy is created |
+| `sandbox_path` | `/tmp/vbw-sandbox` | Where sandbox copy is created |
 | `max_iterations` | `5` | Max retry attempts before failing |
 | `parallel_execution` | `false` | Reserved for future parallel validation |
-| `auto_cleanup` | `true` | Prompt to remove shadow after completion |
+| `auto_cleanup` | `true` | Prompt to remove sandbox after completion |
 | `verbose_logging` | `true` | Enable detailed execution logging |
-| `excluded_patterns` | (see above) | Files/dirs never copied to shadow |
+| `excluded_patterns` | (see above) | Files/dirs never copied to sandbox |
 
 ## Troubleshooting
 
@@ -326,7 +326,7 @@ Unknown command: /vbw-implement
 → Verify files exist: `ls .claude/commands/vbw-implement.md`
 → Restart Claude Code session
 
-### Shadow Sync Issues
+### Sandbox Sync Issues
 
 **Source directory does not exist**
 ```
@@ -343,15 +343,15 @@ ModuleNotFoundError: No module named 'mypackage'
 → VBW uses `uv run` for Python. Ensure deps are in `pyproject.toml`
 → Run `uv sync` in your project first
 
-**Tests pass locally but fail in shadow**
-→ Shadow excludes `.venv`. Run `uv sync` or `npm install` in shadow
+**Tests pass locally but fail in sandbox**
+→ Sandbox excludes `.venv`. Run `uv sync` or `npm install` in sandbox
 → Check if test relies on files in `excluded_patterns`
 
 ### Safety Violations
 
 **PATH VIOLATION error**
 ```
-PATH VIOLATION: /real/project/path is outside shadow directory
+PATH VIOLATION: /real/project/path is outside sandbox directory
 ```
 → This is correct behavior—subagent refused unsafe operation
 → Check if your task description uses absolute paths
@@ -375,7 +375,7 @@ VBW requires at least one of:
 → Syntax checks (`python -m py_compile`) are not sufficient
 → Ensure your task includes running tests or building
 
-**"VBW Copy Gate BLOCKED: Attempting to copy from shadow to project"**
+**"VBW Copy Gate BLOCKED: Attempting to copy from sandbox to project"**
 ```
 You must use AskUserQuestion to get explicit user approval
 ```
@@ -390,9 +390,9 @@ You must use AskUserQuestion to get explicit user approval
 → Re-run installer: `npx github:DavidKinter/vbw-claude --local --with-hooks`
 
 **Hooks blocking normal (non-VBW) operations**
-→ Hooks only activate when `/tmp/vbw-shadow/.vbw-gate-required` exists
+→ Hooks only activate when `/tmp/vbw-sandbox/.vbw-gate-required` exists
 → This marker is created by `/vbw-implement` and removed on cleanup
-→ If stuck, manually remove: `rm /tmp/vbw-shadow/.vbw-gate-required`
+→ If stuck, manually remove: `rm /tmp/vbw-sandbox/.vbw-gate-required`
 
 ## Results
 

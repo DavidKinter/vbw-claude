@@ -347,7 +347,7 @@ vbw-implement calls vbw-environment as first step:
 3. If prep commands needed:
    a. Show commands that will run
    b. Get user confirmation
-   c. Pass prep commands to shadow sync
+   c. Pass prep commands to sandbox sync
 4. Proceed with validation planning
 ```
 

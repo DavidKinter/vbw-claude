@@ -6,7 +6,7 @@
 # Syntax checks and grep patterns are not sufficient.
 #
 # This hook is triggered by the "Stop" event in Claude Code.
-# It checks the execution log in the shadow directory.
+# It checks the execution log in the sandbox directory.
 #
 # Installation: Add to .claude/settings.json:
 # {
@@ -22,9 +22,9 @@
 
 set -e
 
-SHADOW="/tmp/vbw-shadow"
-EXEC_LOG="$SHADOW/.vbw-execution-log"
-GATE_MARKER="$SHADOW/.vbw-gate-required"
+SANDBOX="/tmp/vbw-sandbox"
+EXEC_LOG="$SANDBOX/.vbw-execution-log"
+GATE_MARKER="$SANDBOX/.vbw-gate-required"
 
 # -----------------------------------------------------------------------------
 # If not in VBW context, allow stop (don't interfere with normal Claude usage)
@@ -43,7 +43,7 @@ if [ ! -f "$EXEC_LOG" ]; then
     cat << 'EOF'
 {
   "decision": "block",
-  "reason": "VBW Execution Gate: No execution log found. Commands must be logged during execution. Ensure vbw-execute logs commands to /tmp/vbw-shadow/.vbw-execution-log"
+  "reason": "VBW Execution Gate: No execution log found. Commands must be logged during execution. Ensure vbw-execute logs commands to /tmp/vbw-sandbox/.vbw-execution-log"
 }
 EOF
     exit 0

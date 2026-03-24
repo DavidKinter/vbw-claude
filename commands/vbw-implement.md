@@ -33,9 +33,9 @@ Implements a task using Validate-Before-Write protocol with full skill orchestra
 │     │ USER REVIEW  │ → Present action plan, get approval        │
 │     └──────┬───────┘                                            │
 │            ▼                                                    │
-│  2. EXECUTION PHASE (Shadow Context)                            │
+│  2. EXECUTION PHASE (Sandbox Context)                            │
 │     ┌──────────────┐                                            │
-│     │ Shadow Sync  │ → rsync project to /tmp/vbw-shadow/        │
+│     │ Sandbox Sync  │ → rsync project to /tmp/vbw-sandbox/        │
 │     └──────┬───────┘                                            │
 │            ▼                                                    │
 │     ┌──────────────┐                                            │
@@ -57,7 +57,7 @@ Implements a task using Validate-Before-Write protocol with full skill orchestra
 │     └──────┬───────┘                                            │
 │            ▼ (only if approved)                                 │
 │     ┌──────────────┐                                            │
-│     │ Copy Files   │ → cp from shadow to real codebase          │
+│     │ Copy Files   │ → cp from sandbox to real codebase          │
 │     └──────────────┘                                            │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -110,7 +110,7 @@ Express as ranges with explanatory notes:
 - "~3 min (docker build, python:3.11 base)"
 
 Reversibility check:
-- Shadow-only operations → Reversible
+- Sandbox-only operations → Reversible
 - External writes (push, deploy, DB) → Not reversible (should not be in validation anyway)
 
 Output: Completed "Expected Worst Case" table for action plan
@@ -120,20 +120,20 @@ Output: Completed "Expected Worst Case" table for action plan
 - Format as table with files, validations, expected outputs, worst case
 - WAIT for explicit user approval before proceeding
 
-### Phase 2: Execution (Shadow Context)
+### Phase 2: Execution (Sandbox Context)
 
-**Step 2.1: Shadow Sync**
+**Step 2.1: Sandbox Sync**
 ```bash
-.claude/utils/vbw_shadow_sync.sh
+.claude/utils/vbw_sandbox_sync.sh
 ```
-- Creates /tmp/vbw-shadow/ with rsync
+- Creates /tmp/vbw-sandbox/ with rsync
 - Initializes fresh git repo
 - Confirms initial commit
 
 **Step 2.2: Enable Execution Gate**
 ```bash
-touch /tmp/vbw-shadow/.vbw-gate-required
-> /tmp/vbw-shadow/.vbw-execution-log
+touch /tmp/vbw-sandbox/.vbw-gate-required
+> /tmp/vbw-sandbox/.vbw-execution-log
 ```
 - Creates gate marker (activates Stop hook enforcement)
 - Initializes empty execution log
@@ -155,7 +155,7 @@ The subagent MUST log every Bash command to the execution log:
 
 ```bash
 # Before EVERY Bash command, log it:
-echo "CMD: <command>" >> /tmp/vbw-shadow/.vbw-execution-log
+echo "CMD: <command>" >> /tmp/vbw-sandbox/.vbw-execution-log
 
 # Then run the command
 <command>
@@ -163,7 +163,7 @@ echo "CMD: <command>" >> /tmp/vbw-shadow/.vbw-execution-log
 
 Example:
 ```bash
-echo "CMD: docker build -t test ." >> /tmp/vbw-shadow/.vbw-execution-log
+echo "CMD: docker build -t test ." >> /tmp/vbw-sandbox/.vbw-execution-log
 docker build -t test .
 ```
 
@@ -198,7 +198,7 @@ This log is verified by the execution gate. If no execution commands (docker bui
 
 **CRITICAL: MANDATORY APPROVAL GATE (Hook-Enforced)**
 
-Before ANY file is copied from shadow to project, you MUST:
+Before ANY file is copied from sandbox to project, you MUST:
 
 1. Use the `AskUserQuestion` tool to request explicit approval
 2. List every file that will be copied
@@ -208,20 +208,20 @@ Before ANY file is copied from shadow to project, you MUST:
 
 ```
 REQUIRED: AskUserQuestion with:
-- Question: "Copy validated files from shadow to project?"
+- Question: "Copy validated files from sandbox to project?"
 - Options:
   - "Yes, copy to project" (approval)
-  - "No, keep in shadow only" (reject)
+  - "No, keep in sandbox only" (reject)
   - "Show me the diffs first" (defer)
 ```
 
 **Step 4.0: Create Approval Marker (ONLY after user selects "Yes")**
 
-The PreToolUse hook (`vbw-copy-gate.sh`) blocks all copy operations from shadow to project. The marker unlocks this gate.
+The PreToolUse hook (`vbw-copy-gate.sh`) blocks all copy operations from sandbox to project. The marker unlocks this gate.
 
 ```bash
 # ONLY execute this if user selected "Yes, copy to project":
-touch /tmp/vbw-shadow/.vbw-copy-approved
+touch /tmp/vbw-sandbox/.vbw-copy-approved
 ```
 
 **IMPORTANT**:
@@ -231,37 +231,37 @@ touch /tmp/vbw-shadow/.vbw-copy-approved
 
 **Step 4.1: Copy Validated Files (ONLY after approval + marker)**
 ```bash
-cp /tmp/vbw-shadow/{file} {real_path}
+cp /tmp/vbw-sandbox/{file} {real_path}
 ```
 - Only copy files that passed validation
 - Preserve file permissions
 - Copy will be BLOCKED by hook if marker is missing
 
-**Step 4.2: Shadow Cleanup (REQUIRES EXPLICIT APPROVAL)**
+**Step 4.2: Sandbox Cleanup (REQUIRES EXPLICIT APPROVAL)**
 
 **CRITICAL: MANDATORY APPROVAL GATE**
 
 After the copy decision is resolved (approved or declined), you MUST:
 
-1. Use the `AskUserQuestion` tool to request explicit approval for shadow removal
+1. Use the `AskUserQuestion` tool to request explicit approval for sandbox removal
 2. Wait for user to select an option
-3. Only remove shadow if user selects "Yes, remove shadow"
-4. If user declines, shadow remains at `/tmp/vbw-shadow/` for manual inspection
+3. Only remove sandbox if user selects "Yes, remove sandbox"
+4. If user declines, sandbox remains at `/tmp/vbw-sandbox/` for manual inspection
 
 ```
 REQUIRED: AskUserQuestion with:
-- Question: "Remove shadow directory (/tmp/vbw-shadow)?"
+- Question: "Remove sandbox directory (/tmp/vbw-sandbox)?"
 - Options:
-  - "Yes, remove shadow" (cleanup)
-  - "No, keep shadow for inspection" (preserve)
+  - "Yes, remove sandbox" (cleanup)
+  - "No, keep sandbox for inspection" (preserve)
 ```
 
 ```bash
 # Only execute if user approved removal:
-rm -rf /tmp/vbw-shadow
+rm -rf /tmp/vbw-sandbox
 ```
 
-**Note:** Removing the shadow directory also removes:
+**Note:** Removing the sandbox directory also removes:
 - `.vbw-gate-required` - deactivates execution gate for future sessions
 - `.vbw-copy-approved` - clears copy approval for future sessions
 - `.vbw-execution-log` - clears execution log
@@ -269,10 +269,10 @@ rm -rf /tmp/vbw-shadow
 ## Tool Restrictions for Execution Subagent
 
 ### ALLOWED Tools (Subagent)
-- Bash (for running commands in shadow)
-- Write (for creating files in shadow)
-- Edit (for modifying files in shadow)
-- Read (for reading files in shadow)
+- Bash (for running commands in sandbox)
+- Write (for creating files in sandbox)
+- Edit (for modifying files in sandbox)
+- Read (for reading files in sandbox)
 
 ### DENIED Tools (Subagent)
 - Grep (use `grep` via Bash instead)
@@ -280,16 +280,16 @@ rm -rf /tmp/vbw-shadow
 - Task (no nested subagents)
 - WebFetch (no external requests)
 - WebSearch (no external requests)
-- LSP (not needed in shadow)
+- LSP (not needed in sandbox)
 
 ### Directory Constraint
-ALL file operations MUST target paths starting with `/tmp/vbw-shadow/`
+ALL file operations MUST target paths starting with `/tmp/vbw-sandbox/`
 
 Before ANY Write/Edit/Read:
 ```
-IF path does NOT start with "/tmp/vbw-shadow/":
+IF path does NOT start with "/tmp/vbw-sandbox/":
     STOP
-    Report: "ERROR: Attempted operation outside shadow directory"
+    Report: "ERROR: Attempted operation outside sandbox directory"
     FAIL immediately
 ```
 
@@ -332,7 +332,7 @@ Present this to user for approval:
 | Disk | ~{X}MB | {packages, docker layers, etc.} |
 | Time | ~{X} min | {build, test, validation duration} |
 | Network | Yes/No | {dependency fetches, docker pulls} |
-| Reversible | Yes/No | {shadow-only, or modifies external state} |
+| Reversible | Yes/No | {sandbox-only, or modifies external state} |
 
 ### Challenges Addressed
 - {challenge from vbw-advocate}
@@ -370,11 +370,11 @@ Present this after execution:
 
 ## Constraints
 
-- **NEVER copy files from shadow to project without explicit AskUserQuestion approval**
+- **NEVER copy files from sandbox to project without explicit AskUserQuestion approval**
 - NEVER proceed without user approval at each gate
 - NEVER skip validation steps
 - NEVER report PASS without string match confirmation
 - ALWAYS enforce tool restrictions on subagent
 - ALWAYS enforce directory constraints on subagent
 - ALWAYS use AskUserQuestion tool before Phase 4 copy operations
-- If approval is denied, shadow files remain in /tmp/vbw-shadow/ for manual inspection
+- If approval is denied, sandbox files remain in /tmp/vbw-sandbox/ for manual inspection

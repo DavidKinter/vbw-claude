@@ -1,11 +1,11 @@
 #!/bin/bash
-# VBW Shadow Sync - Project-Agnostic
-# Syncs current working directory to shadow location for validated execution
+# VBW Sandbox Sync - Project-Agnostic
+# Syncs current working directory to sandbox location for validated execution
 
 set -e
 
 # Configuration
-SHADOW_PATH="/tmp/vbw-shadow"
+SANDBOX_PATH="/tmp/vbw-sandbox"
 SOURCE_PATH="${1:-$PWD}"
 
 # Colors for output
@@ -14,9 +14,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${YELLOW}VBW Shadow Sync${NC}"
+echo -e "${YELLOW}VBW Sandbox Sync${NC}"
 echo "Source: $SOURCE_PATH"
-echo "Target: $SHADOW_PATH"
+echo "Target: $SANDBOX_PATH"
 echo ""
 
 # Validate source exists
@@ -25,14 +25,14 @@ if [ ! -d "$SOURCE_PATH" ]; then
     exit 1
 fi
 
-# Clean previous shadow if exists
-if [ -d "$SHADOW_PATH" ]; then
-    echo "Cleaning previous shadow..."
-    rm -rf "$SHADOW_PATH"
+# Clean previous sandbox if exists
+if [ -d "$SANDBOX_PATH" ]; then
+    echo "Cleaning previous sandbox..."
+    rm -rf "$SANDBOX_PATH"
 fi
 
-# Create shadow directory
-mkdir -p "$SHADOW_PATH"
+# Create sandbox directory
+mkdir -p "$SANDBOX_PATH"
 
 # Rsync with common exclusions (language-agnostic)
 # SECURITY: Excludes secrets, credentials, and sensitive files
@@ -72,21 +72,21 @@ rsync -a --delete \
     --exclude='.vscode' \
     --exclude='*.log' \
     --exclude='vendor' \
-    "$SOURCE_PATH/" "$SHADOW_PATH/"
+    "$SOURCE_PATH/" "$SANDBOX_PATH/"
 
-# Initialize fresh git repo in shadow
+# Initialize fresh git repo in sandbox
 echo "Initializing git repository..."
-cd "$SHADOW_PATH"
+cd "$SANDBOX_PATH"
 git init -q
 git add -A
-git commit -q -m "VBW: Initial shadow snapshot"
+git commit -q -m "VBW: Initial sandbox snapshot"
 
 # Get commit hash
 COMMIT_HASH=$(git rev-parse --short HEAD)
 
 echo ""
-echo -e "${GREEN}Shadow sync complete${NC}"
+echo -e "${GREEN}Sandbox sync complete${NC}"
 echo "Commit: $COMMIT_HASH"
 echo "Files: $(git ls-files | wc -l | tr -d ' ')"
 echo ""
-echo "Shadow ready at: $SHADOW_PATH"
+echo "Sandbox ready at: $SANDBOX_PATH"

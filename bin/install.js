@@ -36,7 +36,7 @@ Hooks (--with-hooks):
      before reporting success. Prevents "PASS without execution" failures.
 
   2. vbw-copy-gate.sh (PreToolUse hook)
-     Blocks copying files from shadow to project without explicit
+     Blocks copying files from sandbox to project without explicit
      user approval via AskUserQuestion.
 
   These hooks are RECOMMENDED for full VBW protection.
@@ -247,7 +247,7 @@ if (withHooks) {
   console.log('  ✓ vbw-execution-gate.sh (Stop)');
   console.log('      Ensures code execution before completion');
   console.log('  ✓ vbw-copy-gate.sh (PreToolUse)');
-  console.log('      Blocks unauthorized shadow→project copies');
+  console.log('      Blocks unauthorized sandbox→project copies');
 }
 
 console.log('');

@@ -22,8 +22,8 @@ venv/
 dist/
 build/
 
-# VBW shadow directory (should never be committed)
-/tmp/vbw-shadow/
+# VBW sandbox directory (should never be committed)
+/tmp/vbw-sandbox/
 
 # Local settings (user-specific)
 .claude/

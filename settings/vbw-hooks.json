@@ -30,7 +30,7 @@
   "installation_notes": {
     "step1": "Copy hooks/*.sh to .claude/hooks/",
     "step2": "Merge hooks config into .claude/settings.json",
-    "step3": "Both hooks activate when /tmp/vbw-shadow/.vbw-gate-required exists",
+    "step3": "Both hooks activate when /tmp/vbw-sandbox/.vbw-gate-required exists",
     "step4": "vbw-implement creates this marker when starting a VBW session"
   },
 
@@ -42,7 +42,7 @@
     },
     "vbw-copy-gate.sh": {
       "event": "PreToolUse (Bash)",
-      "purpose": "Blocks copy operations from shadow to project without explicit user approval",
+      "purpose": "Blocks copy operations from sandbox to project without explicit user approval",
       "promise": "VBW Promise #2: Never copy from sandbox without explicit approval"
     }
   }

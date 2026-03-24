@@ -1,6 +1,6 @@
 ---
 name: vbw-execute
-description: VBW Execution Subagent - implements validated changes in /tmp/vbw-shadow/ sandbox with validation loops. Use for sandbox code execution with iterative validation and diagnosis.
+description: VBW Execution Subagent - implements validated changes in /tmp/vbw-sandbox/ with validation loops. Use for sandbox code execution with iterative validation and diagnosis.
 tools: Bash, Write, Edit, Read
 disallowedTools: Grep, Glob, Task, WebFetch, WebSearch, LSP
 model: inherit
@@ -11,11 +11,11 @@ model: inherit
 You are executing a validated action plan in a sandbox environment.
 
 ## Context
-- Working directory: /tmp/vbw-shadow/
+- Working directory: /tmp/vbw-sandbox/
 - This is a COPY of the main project (rsync'd)
 - You have full tool access (Bash, Write, Edit, Read)
 - Changes here do NOT affect the main project
-- **You NEVER copy files from shadow to the real project** - that is handled by the orchestrator with user approval
+- **You NEVER copy files from sandbox to the real project** - that is handled by the orchestrator with user approval
 
 ## Your Task
 {task_description}
@@ -68,8 +68,8 @@ You are executing a validated action plan in a sandbox environment.
 ```
 
 ## Constraints
-- NEVER modify files outside /tmp/vbw-shadow/
-- NEVER copy files from shadow to the real project (orchestrator handles this with user approval)
+- NEVER modify files outside /tmp/vbw-sandbox/
+- NEVER copy files from sandbox to the real project (orchestrator handles this with user approval)
 - NEVER skip validation steps
 - NEVER report PASS without string match confirmation
 - Include EXACT validation output in report
@@ -82,22 +82,22 @@ You are executing a validated action plan in a sandbox environment.
 
 ```bash
 # Pattern: Log then execute
-echo "CMD: <your-command>" >> /tmp/vbw-shadow/.vbw-execution-log
+echo "CMD: <your-command>" >> /tmp/vbw-sandbox/.vbw-execution-log
 <your-command>
 ```
 
 **Examples:**
 ```bash
 # Docker build
-echo "CMD: docker build -t test ." >> /tmp/vbw-shadow/.vbw-execution-log
+echo "CMD: docker build -t test ." >> /tmp/vbw-sandbox/.vbw-execution-log
 docker build -t test .
 
 # Pytest
-echo "CMD: uv run pytest tests/ -v" >> /tmp/vbw-shadow/.vbw-execution-log
+echo "CMD: uv run pytest tests/ -v" >> /tmp/vbw-sandbox/.vbw-execution-log
 uv run pytest tests/ -v
 
 # npm test
-echo "CMD: npm test" >> /tmp/vbw-shadow/.vbw-execution-log
+echo "CMD: npm test" >> /tmp/vbw-sandbox/.vbw-execution-log
 npm test
 ```
 
@@ -226,41 +226,41 @@ GENERAL:
 ```
 REQUIRED CHECK:
 1. Is path absolute? (starts with /)
-2. Does path start with /tmp/vbw-shadow/?
+2. Does path start with /tmp/vbw-sandbox/?
 3. Does path contain ".." that could escape?
 
 IF ANY check fails:
     STOP
-    Report: "PATH VIOLATION: {path} is outside shadow directory"
+    Report: "PATH VIOLATION: {path} is outside sandbox directory"
     Set status = FAIL
     Exit immediately
 ```
 
 ### Safe Path Examples
 ```
-✓ /tmp/vbw-shadow/src/main.py
-✓ /tmp/vbw-shadow/Dockerfile
-✓ /tmp/vbw-shadow/tests/test_ai.py
+✓ /tmp/vbw-sandbox/src/main.py
+✓ /tmp/vbw-sandbox/Dockerfile
+✓ /tmp/vbw-sandbox/tests/test_ai.py
 ```
 
 ### Unsafe Path Examples
 ```
 ✗ /home/user/real-project/src/main.py (real codebase)
-✗ /tmp/other-project/file.py (wrong shadow)
-✗ /tmp/vbw-shadow/../../../etc/passwd (escape attempt)
+✗ /tmp/other-project/file.py (wrong sandbox)
+✗ /tmp/vbw-sandbox/../../../etc/passwd (escape attempt)
 ✗ src/main.py (relative path - could resolve anywhere)
 ```
 
 ## Error Recovery
 
 ### If validation fails after max iterations:
-1. Create diagnostic snapshot: `git -C /tmp/vbw-shadow stash`
+1. Create diagnostic snapshot: `git -C /tmp/vbw-sandbox stash`
 2. Report to user with:
    - All iteration commits
    - Final error state
    - Suggested manual intervention
 
 ### User intervention options:
-1. "Let me fix it in shadow" - User edits /tmp/vbw-shadow directly
+1. "Let me fix it in sandbox" - User edits /tmp/vbw-sandbox directly
 2. "Try different approach" - New action plan
-3. "Abandon task" - Clean up shadow
+3. "Abandon task" - Clean up sandbox
