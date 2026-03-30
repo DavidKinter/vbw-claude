@@ -6,7 +6,7 @@ Given a task description, evaluate which engineering roles should review this ch
 
 **Do NOT use static file-type mappings.** Instead, reason about the task:
 
-> "Which roles at a pre-IPO scale-up would typically work on designing, implementing, and testing this kind of change?"
+> "Which roles at a pre-IPO scale-up would typically work on designing, implementing, testing, and distributing this kind of change?"
 
 Consider:
 - **Nature of the change**: Infrastructure? Feature? Bug fix? Security patch? Performance optimization?

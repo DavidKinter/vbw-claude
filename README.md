@@ -134,12 +134,26 @@ cat .claude/settings.json | grep -A5 '"hooks"'
 
 ## VBW Promises
 
-VBW makes two guarantees, enforced by native Claude Code hooks:
+VBW makes three guarantees, enforced by native Claude Code hooks:
 
 | Promise | Hook | What It Does |
 |---------|------|--------------|
 | **Always run code** | `vbw-execution-gate.sh` (Stop) | Claude cannot finish a VBW session until actual execution (docker build, pytest, etc.) has occurred. Syntax checks alone are not sufficient. |
 | **Never copy without approval** | `vbw-copy-gate.sh` (PreToolUse) | Claude cannot copy files from sandbox to project without explicit user approval via AskUserQuestion. |
+| **Always verify live APIs** | `vbw-live-api-gate.sh` (Stop) | When a task involves external API integration, Claude cannot finish until a live HTTP call verifies the API response matches mocked test expectations. Catches confabulated URLs, hallucinated schemas, and specification drift. |
+
+Promise #3 activates only when external API integration is detected
+(HTTP client imports, mocking decorators, or API URLs in the code).
+Tasks with no external APIs are unaffected.
+
+| Verdict | Meaning | Action |
+|---------|---------|--------|
+| MATCH | Live response matches mocks | Proceed to commit |
+| CONFIRMED | Endpoint exists, request rejected | Proceed (endpoint is real) |
+| PARTIAL | Core keys present, some missing | Proceed with warning |
+| MISMATCH | Structure fundamentally different | **BLOCKED** — fix mocks first |
+| UNREACHABLE | API unavailable | Proceed with warning (soft fail) |
+| SKIPPED | No external API in task | N/A |
 
 These hooks provide **native enforcement**—Claude cannot bypass them, even if prompted to do so.
 

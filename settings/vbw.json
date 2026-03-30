@@ -43,6 +43,38 @@
         "kotlin": ["build.gradle.kts", "*.kt", "*.kts"],
         "cpp": ["CMakeLists.txt", "Makefile", "*.cpp", "*.c", "*.h", "*.hpp"]
       }
+    },
+    "live_api_validation": {
+      "enabled": true,
+      "retry_count": 3,
+      "retry_delay_seconds": 5,
+      "soft_fail_on_connectivity": true,
+      "request_timeout_seconds": 15,
+      "indicators": [
+        "import requests",
+        "import httpx",
+        "import aiohttp",
+        "import urllib",
+        "@responses.activate",
+        "responses.get(",
+        "responses.post(",
+        "httpretty",
+        "https://",
+        "http://"
+      ],
+      "skip_patterns": [
+        "localhost",
+        "127.0.0.1",
+        "0.0.0.0"
+      ],
+      "verdicts": {
+        "pass": ["MATCH", "CONFIRMED", "PARTIAL", "UNREACHABLE"],
+        "block": ["MISMATCH"]
+      },
+      "marker_files": {
+        "endpoints": ".vbw-live-validation-endpoints",
+        "result": ".vbw-live-validation-result"
+      }
     }
   }
 }

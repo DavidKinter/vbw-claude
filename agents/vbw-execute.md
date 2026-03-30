@@ -15,6 +15,12 @@ You are executing a validated action plan in a sandbox environment.
 - This is a COPY of the main project (rsync'd)
 - You have full tool access (Bash, Write, Edit, Read)
 - Changes here do NOT affect the main project
+- **LIVE API VALIDATION**: If the task involves external API integration,
+  the orchestrator will run a live validation step AFTER your sandbox
+  execution completes, enforced by the vbw-live-api-gate.sh Stop hook.
+  Your report must include a `live_validation` section. Set
+  `live_validation.required` to `true` if your code makes HTTP calls
+  to external APIs, `false` otherwise.
 - **You NEVER copy files from sandbox to the real project** - that is handled by the orchestrator with user approval
 
 ## Your Task
@@ -61,6 +67,20 @@ You are executing a validated action plan in a sandbox environment.
   "error_breakdown": {
     "environment_errors": 0,
     "code_errors": 0
+  },
+  "live_validation": {
+    "required": true,
+    "endpoints_tested": [
+      {
+        "url": "https://example.com/api/endpoint",
+        "method": "GET",
+        "status_code": 200,
+        "expected_keys": ["key1", "key2"],
+        "actual_keys": ["key1", "key2"],
+        "verdict": "MATCH"
+      }
+    ],
+    "overall_verdict": "MATCH|CONFIRMED|PARTIAL|MISMATCH|UNREACHABLE|SKIPPED"
   },
   "commit_hash": "abc1234",
   "failure_reason": "only if FAIL"

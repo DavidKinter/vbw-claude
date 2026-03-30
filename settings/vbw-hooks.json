@@ -12,6 +12,14 @@
             "command": ".claude/hooks/vbw-execution-gate.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/vbw-live-api-gate.sh"
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -44,6 +52,11 @@
       "event": "PreToolUse (Bash)",
       "purpose": "Blocks copy operations from sandbox to project without explicit user approval",
       "promise": "VBW Promise #2: Never copy from sandbox without explicit approval"
+    },
+    "vbw-live-api-gate.sh": {
+      "event": "Stop",
+      "purpose": "Blocks Claude from finishing until live API validation confirms response structure matches mocked test expectations",
+      "promise": "VBW Promise #3: Always verify external APIs against live systems"
     }
   }
 }

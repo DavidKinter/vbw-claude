@@ -194,6 +194,172 @@ This log is verified by the execution gate. If no execution commands (docker bui
 - Present results with file diffs
 - WAIT for explicit user approval before copying
 
+### Phase 3.5: Live API Validation (Hook-Enforced — API Tasks Only)
+
+**Enforcement:** This phase is enforced by the `vbw-live-api-gate.sh`
+Stop hook. If the orchestrator creates the endpoints marker file but
+does not complete validation, Claude CANNOT finish the session.
+
+**When to activate:** After sandbox execution completes, scan the
+sandbox code for API integration indicators:
+- HTTP client imports (`import requests`, `import httpx`, `import aiohttp`)
+- HTTP mocking decorators (`@responses.activate`, `httpretty`, `@patch`)
+- URL string constants matching `https?://` patterns (excluding localhost)
+
+If ANY indicator is present, create the marker file:
+```bash
+# Write endpoints to validate (one per line: METHOD URL EXPECTED_KEYS)
+cat > /tmp/vbw-sandbox/.vbw-live-validation-endpoints << 'ENDPOINTS'
+GET https://example.com/api/endpoint key1,key2,key3
+POST https://other.com/api/data totalCount,items
+ENDPOINTS
+```
+
+**When to skip:** If NO indicators are present, do NOT create the marker
+file. The hook will allow the Stop event without validation.
+
+**Step 3.5.1: Extract Endpoints**
+From the sandbox implementation code, identify:
+- The API endpoint URL(s) being called
+- The HTTP method (GET/POST)
+- Required headers and authentication (read from project .env)
+- Expected response structure (from mocked test data)
+
+**Step 3.5.2: Make Live API Call**
+From the ORCHESTRATOR context (not the sandbox), make ONE real HTTP
+request to each identified endpoint. Use the minimum parameters needed
+to get a valid response (e.g., page_size=1, limit=1).
+```bash
+uv run python -c "
+import requests, json, os, sys, time, random
+from dotenv import load_dotenv; load_dotenv()
+
+# --- Status code classification (RFC 9110) ---
+ABSENT_CODES = {404, 410, 405, 501}       # Endpoint does not exist (hard fail)
+CONFIRMED_CODES = {400, 401, 403, 409, 415, 422}  # Endpoint exists, request rejected
+RETRYABLE_CODES = {408, 429, 500, 502, 503, 504}  # Transient, retry with backoff
+
+def classify_response(resp):
+    # Cloudflare challenge detection (Cloudflare, 2026)
+    cf_mitigated = resp.headers.get('cf-mitigated', '')
+    if cf_mitigated.lower() == 'challenge':
+        return 'TRANSIENT'  # Cloudflare challenge, not a real API response
+    # Content-Type interception detection
+    content_type = resp.headers.get('content-type', '')
+    if 'text/html' in content_type and resp.status_code != 200:
+        return 'TRANSIENT'  # Likely CDN/proxy HTML error page, not API
+    # RFC 9110 classification
+    if 200 <= resp.status_code < 400:
+        return 'SUCCESS'
+    if resp.status_code in ABSENT_CODES:
+        return 'ABSENT'
+    if resp.status_code in CONFIRMED_CODES:
+        return 'CONFIRMED'
+    if resp.status_code in RETRYABLE_CODES:
+        return 'TRANSIENT'
+    return 'TRANSIENT'  # Unknown codes default to transient
+
+def make_request_with_retry(method, url, max_retries=3):
+    headers = {'Accept': 'application/json', 'User-Agent': 'VBW-Validator/1.1'}
+    last_resp = None
+    for attempt in range(max_retries + 1):
+        try:
+            if method == 'GET':
+                resp = requests.get(url, headers=headers, timeout=15)
+            else:
+                resp = requests.post(url, json={}, headers=headers, timeout=15)
+            classification = classify_response(resp)
+            if classification != 'TRANSIENT' or attempt == max_retries:
+                return resp, classification
+            # Honour Retry-After if present and reasonable
+            retry_after = resp.headers.get('Retry-After')
+            if retry_after and retry_after.isdigit() and int(retry_after) <= 60:
+                time.sleep(int(retry_after))
+            else:
+                # Exponential backoff with full jitter (AWS, 2019)
+                delay = random.uniform(0, min(10, 1 * (2 ** attempt)))
+                time.sleep(delay)
+            last_resp = resp
+        except (requests.ConnectionError, requests.Timeout) as e:
+            if attempt == max_retries:
+                return None, 'TRANSIENT'
+            delay = random.uniform(0, min(10, 1 * (2 ** attempt)))
+            time.sleep(delay)
+    return last_resp, 'TRANSIENT'
+
+# --- Main validation loop ---
+endpoints = open('/tmp/vbw-sandbox/.vbw-live-validation-endpoints').read().strip().split('\n')
+results = []
+
+for line in endpoints:
+    parts = line.split()
+    method, url = parts[0], parts[1]
+    expected_keys = set(parts[2].split(',')) if len(parts) > 2 else set()
+
+    resp, classification = make_request_with_retry(method, url)
+
+    if classification == 'ABSENT':
+        verdict = 'MISMATCH'
+        detail = f'HTTP {resp.status_code} — endpoint does not exist'
+    elif classification == 'CONFIRMED':
+        verdict = 'CONFIRMED'
+        detail = f'HTTP {resp.status_code} — endpoint exists (request rejected)'
+    elif classification == 'SUCCESS':
+        try:
+            actual_keys = set(resp.json().keys())
+            if expected_keys and not expected_keys.issubset(actual_keys):
+                verdict = 'MISMATCH'
+                detail = f'expected {sorted(expected_keys)}, got {sorted(actual_keys)}'
+            elif expected_keys:
+                verdict = 'MATCH'
+                detail = 'all expected keys present'
+            else:
+                verdict = 'PARTIAL'
+                detail = 'no expected keys specified'
+        except (json.JSONDecodeError, ValueError):
+            verdict = 'MISMATCH'
+            detail = 'response is not valid JSON'
+    else:  # TRANSIENT after retries exhausted
+        verdict = 'UNREACHABLE'
+        status = resp.status_code if resp else 'N/A'
+        detail = f'HTTP {status} after 3 retries — transient failure'
+
+    status_code = resp.status_code if resp else 0
+    results.append(f'{verdict} {url} {status_code}')
+    print(f'{verdict}: {url} ({detail})')
+
+with open('/tmp/vbw-sandbox/.vbw-live-validation-result', 'w') as f:
+    f.write('\n'.join(results) + '\n')
+
+print('LIVE_VALIDATION: COMPLETE')
+"
+```
+
+**Step 3.5.3: Evaluate Results**
+- **MATCH**: All expected keys present in live response → proceed to Phase 4
+- **CONFIRMED**: Endpoint exists but rejected the request (401/403/400/422) →
+  proceed to Phase 4. The endpoint is real; authentication or payload
+  requirements prevent full validation but confabulated URLs are ruled out.
+- **PARTIAL**: Response received but no expected keys specified → proceed with WARNING
+- **MISMATCH**: Endpoint does not exist (404/410), expected keys not found in
+  response, or response is not valid JSON → STOP and report discrepancy.
+  The hook will BLOCK completion until mismatches are resolved.
+- **UNREACHABLE**: API timeout, connection failure, or transient server error
+  (5xx) after 3 retries → proceed with WARNING (soft fail on genuine
+  transient unavailability only)
+
+**Step 3.5.4: Include in Report**
+Add the live validation result to the VBW Execution Report:
+```markdown
+### Live API Validation
+| Endpoint | Status | Expected Keys | Actual Keys | Verdict |
+|----------|--------|---------------|-------------|---------|
+| {url}    | {code} | {expected}    | {actual}    | MATCH   |
+```
+
+If verdict is MISMATCH, include the full expected vs actual key comparison
+and recommend specific fixes before proceeding.
+
 ### Phase 4: Commit (REQUIRES EXPLICIT APPROVAL)
 
 **CRITICAL: MANDATORY APPROVAL GATE (Hook-Enforced)**
@@ -265,6 +431,8 @@ rm -rf /tmp/vbw-sandbox
 - `.vbw-gate-required` - deactivates execution gate for future sessions
 - `.vbw-copy-approved` - clears copy approval for future sessions
 - `.vbw-execution-log` - clears execution log
+- `.vbw-live-validation-endpoints` - deactivates live API gate for future sessions
+- `.vbw-live-validation-result` - clears validation results for future sessions
 
 ## Tool Restrictions for Execution Subagent
 
@@ -338,6 +506,10 @@ Present this to user for approval:
 - {challenge from vbw-advocate}
 - {how it was addressed}
 
+### Live API Validation Required
+- [ ] Yes — endpoints identified: {list of URLs}
+- [ ] No — task does not involve external APIs
+
 ### Approval Required
 - [ ] User approves action plan
 - [ ] User approves to proceed with execution
@@ -361,6 +533,11 @@ Present this after execution:
 | # | Command | Expected | Actual | Pass |
 |---|---------|----------|--------|------|
 | 1 | `{cmd}` | "{exp}" | "{act}" | ✓/✗ |
+
+### Live API Validation (if applicable)
+| Endpoint | Status | Verdict |
+|----------|--------|---------|
+| {url}    | {code} | MATCH/PARTIAL/MISMATCH/UNREACHABLE |
 
 ### Next Steps
 - [ ] User approves copy to real codebase

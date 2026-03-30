@@ -29,7 +29,7 @@ Examples:
   npx vbw-claude --global             # Install globally for all projects
 
 Hooks (--with-hooks):
-  VBW provides two native enforcement hooks:
+  VBW provides three native enforcement hooks:
 
   1. vbw-execution-gate.sh (Stop hook)
      Ensures Claude actually runs code (docker build, pytest, etc.)
@@ -38,6 +38,11 @@ Hooks (--with-hooks):
   2. vbw-copy-gate.sh (PreToolUse hook)
      Blocks copying files from sandbox to project without explicit
      user approval via AskUserQuestion.
+
+  3. vbw-live-api-gate.sh (Stop hook)
+     When external API integration is detected, blocks completion
+     until a live HTTP call verifies the response matches mocked
+     test expectations. Catches hallucinated schemas and spec drift.
 
   These hooks are RECOMMENDED for full VBW protection.
 `);
@@ -163,6 +168,14 @@ function installHooksConfig(settingsPath) {
               command: ".claude/hooks/vbw-execution-gate.sh"
             }
           ]
+        },
+        {
+          hooks: [
+            {
+              type: "command",
+              command: ".claude/hooks/vbw-live-api-gate.sh"
+            }
+          ]
         }
       ],
       PreToolUse: [
@@ -248,12 +261,19 @@ if (withHooks) {
   console.log('      Ensures code execution before completion');
   console.log('  ✓ vbw-copy-gate.sh (PreToolUse)');
   console.log('      Blocks unauthorized sandbox→project copies');
+  console.log('  ✓ vbw-live-api-gate.sh (Stop)');
+  console.log('      Blocks completion without live API validation');
 }
 
 console.log('');
 console.log('Done. Available commands:');
-console.log('  /vbw-implement  - Start validated task');
-console.log('  /vbw-team       - Multi-role validation');
+console.log('  /vbw-implement    - Start validated task (main entry point)');
+console.log('  /vbw-team         - Assign reviewer roles');
+console.log('  /vbw-validate     - Generate validation commands');
+console.log('  /vbw-advocate     - Challenge proposed validations');
+console.log('  /vbw-deps         - Analyze dependency order');
+console.log('  /vbw-report       - Aggregate results');
+console.log('  /vbw-environment  - Detect project environment');
 console.log('');
 console.log('Installed subagents:');
 console.log('  vbw-execute     - Sandbox execution (auto-invoked by Task tool)');
